@@ -1,10 +1,10 @@
 [project]
 name = "eppink-utilities"
-version = "0.1.7"
+version = "0.1.6"
 description = "Useful utilities for data processing, plotting, and file handling"
 readme = "README.md"
 requires-python = ">=3.7"
-license = LICENSE
+license = "MIT"
 authors = [{ name = "someMechanicalEngineer" }]
 dependencies = [
     "numpy",
