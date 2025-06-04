@@ -8,6 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ---
 
 ## Version 0.1.0 
-2025-06-04
+2025-05-28
 ### Changed
-- Automate uploading
+- Initial upload
