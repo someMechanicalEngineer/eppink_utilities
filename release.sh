@@ -43,8 +43,9 @@ VERSION=$(grep version pyproject.toml | head -1 | cut -d '"' -f2)
 DATE=$(date +"%Y-%m-%d")
 
 # === STEP 5: Append to CHANGELOG.md ===
-echo -e "\n## Version $VERSION — $DATE\n### Changed\n- Describe your changes here" >> CHANGELOG.md
+echo -e "\n## Version $VERSION\n$DATE\n### Changed\n- Describe your changes here" >> CHANGELOG.md
 echo "Changelog updated. Please edit CHANGELOG.md to describe your changes."
+
 
 
 # === STEP 6: Rebuild the package ===
