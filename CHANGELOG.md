@@ -12,9 +12,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 - Initial upload
 
-## Version 0.2.0 
-2025-06-04
-### Changed
-- Automated pushing to Github
-- Automated pushing to PYPI
-- Automated version bumping
