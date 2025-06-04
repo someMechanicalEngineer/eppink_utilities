@@ -26,3 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-04
 ### Changed
 - Describe your changes here
+
+## Version 0.1.0 
+2025-06-04
+### Changed
+- Describe your changes here
