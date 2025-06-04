@@ -1,8 +1,9 @@
 Metadata-Version: 2.4
 Name: eppink-utilities
-Version: 0.1.4
+Version: 0.1.6
 Summary: Useful utilities for data processing, plotting, and file handling
 Author: someMechanicalEngineer
+License-Expression: MIT
 Project-URL: Homepage, https://github.com/someMechanicalEngineer/eppink-utilities
 Project-URL: Source, https://github.com/someMechanicalEngineer/eppink-utilities
 Project-URL: Tracker, https://github.com/someMechanicalEngineer/eppink-utilities/issues
