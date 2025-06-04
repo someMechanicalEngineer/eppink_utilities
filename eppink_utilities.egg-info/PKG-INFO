@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: eppink-utilities
-Version: 0.2.0
+Version: 0.1.0
 Summary: Useful utilities for data processing, plotting, and file handling
 Author: someMechanicalEngineer
 Project-URL: Homepage, https://github.com/someMechanicalEngineer/eppink-utilities
@@ -8,9 +8,11 @@ Project-URL: Source, https://github.com/someMechanicalEngineer/eppink-utilities
 Project-URL: Tracker, https://github.com/someMechanicalEngineer/eppink-utilities/issues
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
+License-File: LICENSE.txt
 Requires-Dist: numpy
 Requires-Dist: matplotlib
 Requires-Dist: coolprop
+Dynamic: license-file
 
 # eppink-utilities
 
