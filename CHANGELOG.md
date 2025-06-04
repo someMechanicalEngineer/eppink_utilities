@@ -22,3 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 - Automatic PYPI pusher
 - Automatic version bumper
+
+## Version 0.3.6 
+2025-06-04
+### Changed
+- Fixed tracker, homepage and source links
