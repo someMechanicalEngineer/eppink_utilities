@@ -13,9 +13,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/someMechanicalEngineer/eppink-utilities"
-Source = "https://github.com/someMechanicalEngineer/eppink-utilities"
-Tracker = "https://github.com/someMechanicalEngineer/eppink-utilities/issues"
+Homepage = "https://github.com/someMechanicalEngineer/eppink_utilities"
+Source = "https://github.com/someMechanicalEngineer/eppink_utilities"
+Tracker = "https://github.com/someMechanicalEngineer/eppink_utilities/issues"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
