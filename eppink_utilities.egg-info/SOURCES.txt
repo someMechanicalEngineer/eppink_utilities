@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 eppink_utilities/__init__.py
 eppink_utilities/dimless_utils.py

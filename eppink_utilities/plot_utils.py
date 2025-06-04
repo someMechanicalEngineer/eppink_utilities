@@ -5,7 +5,7 @@ import os
 
 def rangeplot(data, labels, name, color_scheme="Set3", path=""):
     """
-    Generates a high-resolution pie chart and saves it as a PNG file.
+    Generates a high-resolution range plot and saves it as a PNG file.
 
     Parameters:
     - data: list of numerical values representing the pie chart slices.
@@ -73,7 +73,7 @@ def rangeplot(data, labels, name, color_scheme="Set3", path=""):
     plt.savefig(full_path, bbox_inches='tight', dpi=300)
     plt.close()
 
-def pychart(data, labels, name, color_scheme="Set3", path="", ylabel=""):
+def piechart(data, labels, name, color_scheme="Set3", path="", ylabel=""):
     """
     Generates a high-resolution bar chart and saves it as a PNG file.
 
@@ -178,5 +178,5 @@ if __name__ == "__main__":
     labels = ["Power plants (coal)", "Power plants (gas)", "Power plants (oil)",  "Industry", "Transport", "Buildings"]
     name = "CO2 emission per industry"
     color_scheme = "Dark2"  # Selected color scheme to avoid color repetition
-    pychart(data, labels, name, color_scheme)
+    piechart(data, labels, name, color_scheme)
 

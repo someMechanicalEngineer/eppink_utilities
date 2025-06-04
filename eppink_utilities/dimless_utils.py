@@ -1,12 +1,12 @@
 from CoolProp.CoolProp import PropsSI
 
 
-def calculate_rayleigh(L, Tin, Tout, fluid='Nitrogen', P=101325):
+def rayleigh(L, Tin, Tout, fluid='Nitrogen', P=101325):
     """
     Calculates the Rayleigh number for a fluid using CoolProp based on real gas data.
 
     Parameters:
-        L (float): Gap width [m]
+        L (float): Characteristic length [m]
         Tin (float): Inner temperature [K]
         Tout (float): Outer temperature [K]
         fluid (str): Fluid name (e.g., 'Nitrogen', 'Air', etc.)
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     P = 101325     # Pa
     fluid = 'Nitrogen'
 
-    Ra, props = calculate_rayleigh(L, Tin, Tout, fluid, P)
+    Ra, props = rayleigh(L, Tin, Tout, fluid, P)
 
     print(f"Rayleigh number: {Ra:.2e}")
+
