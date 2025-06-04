@@ -10,3 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## Version ## Version 0.1.0 
 ### Added
 - Initial release of eppink_utilities on PyPI
+
+## Version version = 
+2025-06-04
+### Changed
+- Describe your changes here
