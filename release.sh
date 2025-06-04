@@ -36,7 +36,7 @@ echo "Which version bump? (patch / minor / major)"
 read BUMP
 
 # === STEP 3: Bump the version and tag it ===
-bump2version "$BUMP"
+bumpversion "$BUMP"
 
 # === STEP 4: Get new version and date ===
 VERSION=$(grep version pyproject.toml | head -1 | cut -d '"' -f2)
