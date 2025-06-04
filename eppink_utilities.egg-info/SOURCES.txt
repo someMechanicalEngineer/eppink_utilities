@@ -1,6 +1,7 @@
 LICENSE
 README.md
 pyproject.toml
+setup.cfg
 eppink_utilities/__init__.py
 eppink_utilities/dimless_utils.py
 eppink_utilities/file_utils.py
