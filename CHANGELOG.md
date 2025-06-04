@@ -31,17 +31,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-04
 ### Changed
 - test upload to pypi
+
 ## Version 0.1.5 
 2025-06-04
 ### Changed
-- Describe your changes here
+- test upload to pypi
 
 ## Version 0.1.6 
 2025-06-04
 ### Changed
-- Describe your changes here
+- test upload to pypi
 
-## Version 0.1.7 
+## Version 0.1.7
 2025-06-04
 ### Changed
-- Describe your changes here
+- test upload to pypi
+
+## Version 0.1.8
+2025-06-04
+### Changed
+- test upload to pypi
