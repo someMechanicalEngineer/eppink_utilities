@@ -208,11 +208,11 @@ def data_exact_row_exists(contents, new_row, case_sensitive=False, type_sensitiv
     """
 
 
-    matched_indices = [i for i, row in enumerate(contents) if rows_match(row, new_row, case_sensitive==case_sensitive, type_sensitive=type_sensitive)]
+    matched_indices = [i for i, row in enumerate(contents) if data_rows_match(row, new_row, case_sensitive==case_sensitive, type_sensitive=type_sensitive)]
     exists = len(matched_indices) > 0
     return exists, matched_indices
 
-def rows_match(row1, row2, case_sensitive=False, type_sensitive=False):
+def data_rows_match(row1, row2, case_sensitive=False, type_sensitive=False):
     """
     Compares two rows (lists, tuples, etc.) element-wise to determine if they match.
 
