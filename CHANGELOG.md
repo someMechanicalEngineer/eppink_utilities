@@ -27,3 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-04
 ### Changed
 - Fixed tracker, homepage and source links
+
+## Version 0.4.0 
+2025-06-06
+### Changed
+- Added dimless_utils containing the first set of dimensionless numbers for fluid, heat and mass transfer
+- Added file_utils containing functions for markdown and csv
+- Added generat_utils
+- added plot_utils
