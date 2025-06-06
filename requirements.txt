@@ -1,3 +1,2 @@
-coolprop==6.8.0
 matplotlib==3.10.3
 numpy==2.2.6
