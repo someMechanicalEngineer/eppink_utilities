@@ -35,3 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Added file_utils containing functions for markdown and csv
 - Added generat_utils
 - added plot_utils
+
+## Version 0.4.1 
+2025-06-07
+### Changed
+- added todo list
+- changed name of some file_utils functions
