@@ -46,3 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-08
 ### Changed
 - Now automatically updates FUNCTIONS.md
+
+## Version 0.6.0 
+2025-06-08
+### Changed
+- Automatically update CITATION.cff with regards to year and version bump
