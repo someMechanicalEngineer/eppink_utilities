@@ -41,3 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 - Added todo list
 - Changed name of some file_utils functions
+
+## Version 0.5.0 
+2025-06-08
+### Changed
+- Now automatically updates FUNCTIONS.md
