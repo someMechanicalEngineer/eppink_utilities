@@ -56,9 +56,6 @@ for file in py_files:
 print(f"Documentation written to {output_file}")
 EOF
 
-# === STEP 4: Bump the version and tag it ===
-
-
 # === STEP 4: Version bump ===
 echo "Which version bump? (patch / minor / major)"
 read BUMP
@@ -66,11 +63,14 @@ bumpversion "$BUMP"
 VERSION=$(grep version pyproject.toml | head -1 | cut -d '"' -f2)
 DATE=$(date +"%Y-%m-%d")
 
+# Update version and release date in CITATION.cff
+sed -i.bak -E "s/^(version: \").*(\")/\1$VERSION\2/" CITATION.cff
+sed -i.bak -E "s/^(date-released: ).*/\1$DATE/" CITATION.cff
+
+
 # === STEP 5: Append to CHANGELOG.md ===
 echo -e "\n## Version $VERSION \n$DATE\n### Changed\n- Describe your changes here" >> CHANGELOG.md
 echo "Changelog updated. Please edit CHANGELOG.md to describe your changes."
-
-
 
 # === STEP 6: Rebuild the package ===
 echo "Cleaning and rebuilding package..."

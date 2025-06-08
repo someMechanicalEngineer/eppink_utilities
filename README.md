@@ -10,4 +10,6 @@ For a function list, refer to FUNCTIONS.md
 You can install the package via PyPI or directly from GitHub:
 
 ```bash
+pip install eppink_utilities
+
 pip install git+https://github.com/someMechanicalEngineer/eppink-utilities.git
