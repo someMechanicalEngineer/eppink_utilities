@@ -1,9 +1,9 @@
 cff-version: 1.2.0
 message: "If you use this package, please cite it as below."
 title: "eppink-utilities: Useful tools for engineering and analysis"
-version: "0.1.0"
+version: "0.6.0"
 doi: ""
-date-released: 2025-05-28
+date-released: 2025-06-08
 authors:
   - name: "Wouter Rens Eppink"
     orcid: "https://orcid.org/0009-0001-4427-4578"

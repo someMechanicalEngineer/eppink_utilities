@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: eppink-utilities
-Version: 0.5.0
+Version: 0.6.0
 Summary: Useful utilities for data processing, plotting, and file handling
 Author: Wouter Rens Eppink
 License: MIT
@@ -27,4 +27,6 @@ For a function list, refer to FUNCTIONS.md
 You can install the package via PyPI or directly from GitHub:
 
 ```bash
+pip install eppink_utilities
+
 pip install git+https://github.com/someMechanicalEngineer/eppink-utilities.git

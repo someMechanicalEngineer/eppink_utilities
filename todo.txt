@@ -1,4 +1,3 @@
-- Automatically update CITATION.cff with regards to year and version bump
-- Automatically make a description of all functions and their uses
+
 - More functions..
 - Create testbranch

@@ -64,8 +64,8 @@ VERSION=$(grep version pyproject.toml | head -1 | cut -d '"' -f2)
 DATE=$(date +"%Y-%m-%d")
 
 # Update version and release date in CITATION.cff
-sed -i.bak -E "s/^(version: \").*(\")/\1$VERSION\2/" CITATION.cff
-sed -i.bak -E "s/^(date-released: ).*/\1$DATE/" CITATION.cff
+sed -E "s/^(version: \").*(\")/\1$VERSION\2/" CITATION.cff
+sed -E "s/^(date-released: ).*/\1$DATE/" CITATION.cff
 
 
 # === STEP 5: Append to CHANGELOG.md ===
