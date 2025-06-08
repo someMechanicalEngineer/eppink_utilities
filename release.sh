@@ -31,14 +31,38 @@ echo "Updating requirements.txt..."
 pipreqs . --force
 echo "requirements.txt updated successfully."
 
-# === STEP 2: Ask for version bump type ===
+# === STEP 3: Update FUNCTIONS ===
+
+python3 - <<EOF
+import os
+from eppink_utilities.file_utils import markdown_append
+from eppink_utilities.general_utils import extract_functions_with_docstrings, list_py_files
+
+source_dir = 'eppink_utilities'
+output_file = 'FUNCTIONS.md'
+output_dir = '.'
+
+py_files = list_py_files(source_dir)
+
+# Clear old file
+with open(os.path.join(output_dir, output_file), 'w', encoding='utf-8') as f:
+    f.write('# Function List\n\n')
+
+for file in py_files:
+    functions = extract_functions_with_docstrings(file)
+    header = f"### From \`{os.path.basename(file)}\`\n\n"
+    markdown_append([header] + functions, output_file, output_dir)
+
+print(f"Documentation written to {output_file}")
+EOF
+
+# === STEP 4: Bump the version and tag it ===
+
+
+# === STEP 4: Version bump ===
 echo "Which version bump? (patch / minor / major)"
 read BUMP
-
-# === STEP 3: Bump the version and tag it ===
 bumpversion "$BUMP"
-
-# === STEP 4: Get new version and date ===
 VERSION=$(grep version pyproject.toml | head -1 | cut -d '"' -f2)
 DATE=$(date +"%Y-%m-%d")
 

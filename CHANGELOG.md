@@ -34,10 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Added dimless_utils containing the first set of dimensionless numbers for fluid, heat and mass transfer
 - Added file_utils containing functions for markdown and csv
 - Added generat_utils
-- added plot_utils
+- Added plot_utils
 
 ## Version 0.4.1 
 2025-06-07
 ### Changed
-- added todo list
-- changed name of some file_utils functions
+- Added todo list
+- Changed name of some file_utils functions

@@ -1,5 +1,6 @@
 import numpy as np
 import ast
+import os
 
 def validate_inputs(*args, dtype=float, allow_scalar=True, check_broadcast=True):
     """
@@ -73,17 +74,18 @@ def extract_functions_with_docstrings(file_path):
 
     return functions
 
-if __name__ == "__main__":
-    print("Test scalars:")
-    a, b = validate_inputs(np.nan, 2.5)  # default dtype float, should work fine
-    print(a, b)
+def list_py_files(directory: str) -> list:
+    """
+    List all Python files in a directory, excluding '__init__.py'.
 
-    print("\nTest int dtype with NaN (should raise ValueError):")
-    try:
-        a, b = validate_inputs(np.nan, 2, dtype=int)
-    except ValueError as e:
-        print("Caught expected ValueError:", e)
+    Parameters:
+        directory (str): Path to the directory to scan.
 
-    print("\nTest int dtype without NaN:")
-    a, b = validate_inputs(1, 2, dtype=float)
-    print(a, b)
+    Returns:
+        list of str: List of .py file paths.
+    """
+    py_files = []
+    for file in os.listdir(directory):
+        if file.endswith(".py") and file != "__init__.py":
+            py_files.append(os.path.join(directory, file))
+    return py_files
