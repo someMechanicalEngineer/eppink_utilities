@@ -1576,6 +1576,28 @@ Returns:
 ### From `math_utils.py`
 
 
+## `average`
+
+Compute column-wise averages over a 2D data array with multiple modes.
+
+Parameters:
+    data (array-like): 2D iterable of shape (n_samples, n_features). May contain np.nan, None, or ''.
+    mode (str): Averaging mode. Options:
+        - 'arithmetic': Simple mean (default)
+        - 'weighted': Weighted average (requires `weights`)
+        - 'geometric': Geometric mean
+        - 'harmonic': Harmonic mean
+        - 'median': Median
+        - 'mode': Most frequent value
+        - 'moving': Moving average (requires `window`)
+        - 'trapezoidal': Integral-based average (requires `time`)
+    weights (array-like): Optional. Weights for 'weighted' mode.
+    window (int): Window size for 'moving' average.
+    time (array-like): Time values for 'trapezoidal' mode.
+
+Returns:
+    numpy.ndarray: 1D or 2D array of averages per column. Missing columns → None; partial NaN → skip; all-NaN → np.nan.
+
 ## `safe_divide`
 
 Safely divide two numbers (scalars, arrays, or combinations thereof),
