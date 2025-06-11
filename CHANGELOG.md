@@ -56,3 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-08
 ### Changed
 - test
+
+## Version 0.6.2 
+2025-06-11
+### Changed
+- Added averaging function
