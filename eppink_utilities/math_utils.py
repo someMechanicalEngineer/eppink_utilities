@@ -105,7 +105,7 @@ def average(data, mode='arithmetic', weights=None, window=2, time=None):
 
     return np.array(results, dtype=object)
 
-def safe_divide(numerator, denominator):
+def safe_divide(numerator, denominator, warnings=False):
     """
     Safely divide two numbers (scalars, arrays, or combinations thereof),
     avoiding division by zero or invalid operations and propagating NaNs
@@ -117,6 +117,8 @@ def safe_divide(numerator, denominator):
         The numerator(s) in the division.
     denominator : float, int, array-like
         The denominator(s) in the division.
+    warnings: bool
+        When True, prints warnings to the terminal
 
     Returns:
     -------
@@ -125,9 +127,6 @@ def safe_divide(numerator, denominator):
         (e.g., inf, -inf, nan) is replaced with np.nan.
         Also, if numerator or denominator is NaN at any position, result is NaN there.
 
-    Side Effects:
-    -------------
-    Prints an error message to the terminal if any division by zero occurs.
     """
     numerator = np.asarray(numerator, dtype=float)
     denominator = np.asarray(denominator, dtype=float)
@@ -148,7 +147,8 @@ def safe_divide(numerator, denominator):
     combined_mask = nan_mask | invalid_mask
 
     if np.any(zero_div_mask):
-        print("Error: Division by zero encountered.")
+        if warnings == True:
+            print("Error: Division by zero encountered.")
 
     if np.isscalar(result):
         if combined_mask:
