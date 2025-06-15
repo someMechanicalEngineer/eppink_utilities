@@ -61,3 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-11
 ### Changed
 - Added averaging function
+
+## Version 0.6.3 
+2025-06-15
+### Changed
+- Bugfix math_utils.safe_divide
