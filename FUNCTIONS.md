@@ -1610,6 +1610,8 @@ numerator : float, int, array-like
     The numerator(s) in the division.
 denominator : float, int, array-like
     The denominator(s) in the division.
+warnings: bool
+    When True, prints warnings to the terminal
 
 Returns:
 -------
@@ -1617,10 +1619,6 @@ result : float or np.ndarray
     The result of the division. Any division by zero or invalid result
     (e.g., inf, -inf, nan) is replaced with np.nan.
     Also, if numerator or denominator is NaN at any position, result is NaN there.
-
-Side Effects:
--------------
-Prints an error message to the terminal if any division by zero occurs.
 
 ### From `plot_utils.py`
 
