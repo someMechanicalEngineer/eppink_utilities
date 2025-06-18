@@ -66,3 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-15
 ### Changed
 - Bugfix math_utils.safe_divide
+
+## Version 0.7.0 
+2025-06-18
+### Changed
+- Added derivative_FDM and conduction_radial_numerical functions
