@@ -1573,6 +1573,86 @@ Parameters:
 Returns:
     list of str: List of .py file paths.
 
+### From `heattransfer_utils.py`
+
+
+## `conduction_radial_steady_numerical`
+
+Solve steady-state radial heat conduction in a cylinder numerically with possible temperature-dependent thermal conductivity.
+
+Parameters
+----------
+r : tuple of floats
+    Radial domain as (r0, R), inner and outer radii.
+L : float
+    Axial length of the cylinder (used to calculate cylindrical surface area).
+bc : tuple
+    Boundary conditions at r0 as (T0, T1_input, Q):
+    - T0: Temperature at inner radius r0.
+    - T1_input: Temperature gradient dT/dr at r0 (can be None if unknown).
+    - Q: Heat flux at r0 (can be None if unknown).
+    Exactly one of T1_input or Q must be provided, or both must be consistent.
+k : float or array-like
+    Thermal conductivity. Can be:
+    - A constant float or int.
+    - An array-like [[T0, k0], [T1, k1], ...] specifying temperature-dependent conductivity,
+      which is interpolated internally.
+gridpoints : int
+    Number of points in radial mesh for numerical solution.
+solver : str, optional
+    ODE solver method for scipy.integrate.solve_ivp (default "RK45").
+tol : float, optional
+    Relative tolerance for heat flux conservation check (default 1e-3).
+
+Returns
+-------
+dict
+    Dictionary containing:
+    - 'r': radial positions array,
+    - 'T': temperature distribution array,
+    - 'dT/dr': temperature gradient array,
+    - 'Q_error': difference between heat flux at inner and outer boundaries (flux conservation error).
+
+Description
+-----------
+Solves the nonlinear ODE system describing steady radial heat conduction in a cylinder:
+
+    d/dr [k(T) * A(r) * dT/dr] = 0,
+
+where A(r) = 2 * pi * r * L is the cylindrical surface area.
+
+The equation expands to:
+
+    d²T/dr² + (1/k) * (dk/dT) * (dT/dr)² + (1/r) * dT/dr = 0,
+
+with boundary conditions at the inner radius r0:
+
+    T(r0) = T0,
+    and either specified temperature gradient dT/dr(r0) = T1_input
+    or specified heat flux Q = -k * A(r0) * dT/dr(r0).
+
+The function supports temperature-dependent thermal conductivity via interpolation,
+and integrates the ODE system numerically using solve_ivp.
+
+It verifies heat flux conservation between inner and outer boundaries and warns
+if the flux discrepancy exceeds the specified tolerance.
+
+Symmetry condition at r=0 is handled by setting the second derivative of temperature to zero.
+
+Warnings are issued if the ODE solver fails or if boundary fluxes are inconsistent.
+
+This method is suitable for modeling steady heat conduction in cylindrical coordinates
+with radial dependence and non-constant thermal conductivity.
+
+## `conduction_radial_analytical`
+
+Analytical solution for radial conduction in a multi-layered cylinder.
+
+Returns
+-------
+sol_guess : dict
+    Dictionary with 'r', 'T', 'Q_dot', 'q_dot', and 'dT_dr'
+
 ### From `math_utils.py`
 
 
@@ -1619,6 +1699,28 @@ result : float or np.ndarray
     The result of the division. Any division by zero or invalid result
     (e.g., inf, -inf, nan) is replaced with np.nan.
     Also, if numerator or denominator is NaN at any position, result is NaN there.
+
+## `derivative_FDM`
+
+Compute the finite difference derivative of a function with uniform spacing.
+
+Parameters:
+    y : np.ndarray
+        Vector of function values.
+    x : np.ndarray
+        Vector of grid points (must be uniformly spaced).
+    derivative : int
+        Order of the derivative to compute (e.g., 1 for first derivative).
+    accuracy : int
+        Desired order of accuracy (e.g., 2 for O(h^2)).
+
+Returns:
+    dy_dx : np.ndarray
+        Vector of the derivative values at each point.
+    x_used : np.ndarray
+        Possibly trimmed x corresponding to dy_dx.
+    error_term : str
+        The truncation error term in big-O notation, e.g., "O(h^2)".
 
 ### From `plot_utils.py`
 

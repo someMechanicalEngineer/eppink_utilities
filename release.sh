@@ -56,6 +56,15 @@ for file in py_files:
 print(f"Documentation written to {output_file}")
 EOF
 
+# Commit FUNCTIONS.md changes if any
+if ! git diff --quiet FUNCTIONS.md; then
+  echo "FUNCTIONS.md updated. Committing changes..."
+  git add FUNCTIONS.md
+  git commit -m "Auto-update FUNCTIONS.md before version bump"
+else
+  echo "FUNCTIONS.md unchanged."
+fi
+
 # === STEP 4: Version bump ===
 echo "Which version bump? (patch / minor / major)"
 read BUMP
