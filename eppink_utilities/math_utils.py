@@ -159,90 +159,274 @@ def safe_divide(numerator, denominator, warnings=False):
 
     return result
 
-if __name__ == '__main__':
-    import numpy as np
-    from pprint import pprint
+def derivative_FDM(y, x, derivative, accuracy):
+    """
+    Compute the finite difference derivative of a function with uniform spacing.
+    
+    Parameters:
+        y : np.ndarray
+            Vector of function values.
+        x : np.ndarray
+            Vector of grid points (must be uniformly spaced).
+        derivative : int
+            Order of the derivative to compute (e.g., 1 for first derivative).
+        accuracy : int
+            Desired order of accuracy (e.g., 2 for O(h^2)).
+    
+    Returns:
+        dy_dx : np.ndarray
+            Vector of the derivative values at each point.
+        x_used : np.ndarray
+            Possibly trimmed x corresponding to dy_dx.
+        error_term : str
+            The truncation error term in big-O notation, e.g., "O(h^2)".
+    """
 
-    test_cases = [
-        {
-            "name": "All valid data",
-            "data": [
-                [1.0, 2.0],
-                [3.0, 4.0],
-                [5.0, 6.0]
-            ]
-        },
-        {
-            "name": "Some NaNs",
-            "data": [
-                [1.0, np.nan],
-                [2.0, 4.0],
-                [np.nan, 6.0]
-            ]
-        },
-        {
-            "name": "All NaNs",
-            "data": [
-                [np.nan, np.nan],
-                [np.nan, np.nan],
-                [np.nan, np.nan]
-            ]
-        },
-        {
-            "name": "Some missing (None, '')",
-            "data": [
-                [1.0, ''],
-                [2.0, None],
-                [3.0, 6.0]
-            ]
-        },
-        {
-            "name": "All missing",
-            "data": [
-                [None, ''],
-                [None, ''],
-                [None, '']
-            ]
-        },
-        {
-            "name": "Empty array",
-            "data": []
-        }
-    ]
+    CD_COEFFS = {
+    (1, 2):  [ -0.5, 0, 0.5 ],
+    (1, 4):  [ 1/12, -2/3, 0, 2/3, -1/12 ],
+    (1, 6):  [ -1/60, 3/20, -3/4, 0, 3/4, -3/20, 1/60 ],
+    (1, 8):  [ 1/280, -4/105, 1/5, -4/5, 0, 4/5, -1/5, 4/105, -1/280 ],
+    (2, 2):  [ 1, -2, 1 ],
+    (2, 4):  [ -1/12, 4/3, -5/2, 4/3, -1/12 ],
+    (2, 6):  [ 1/90, -3/20, 3/2, -49/18, 3/2, -3/20, 1/90 ],
+    (2, 8):  [ -1/560, 8/315, -1/5, 8/5, -205/72, 8/5, -1/5, 8/315, -1/560 ],
+    (3, 2):  [ -0.5, 1, 0, -1, 0.5 ],
+    (3, 4):  [ 1/8, -1, 13/8, 0, -13/8, 1, -1/8 ],
+    (3, 6):  [ -7/240, 3/10, -169/120, 61/30, 0, -61/30, 169/120, -3/10, 7/240 ],
+    (4, 2):  [ 1, -4, 6, -4, 1 ],
+    (4, 4):  [ -1/6, 2, -13/2, 28/3, -13/2, 2, -1/6 ],
+    (4, 6):  [ 7/240, -2/5, 169/60, -122/15, 91/8, -122/15, 169/60, -2/5, 7/240 ]
+}
+    
+    FD_COEFFS = {
+    (1, 1): [-1, 1],
+    (1, 2): [-3/2, 2, -1/2],
+    (1, 3): [-11/6, 3, -3/2, 1/3],
+    (1, 4): [-25/12, 4, -3, 4/3, -1/4],
+    (1, 5): [-137/60, 5, -5, 10/3, -5/4, 1/5],
+    (1, 6): [-49/20, 6, -15/2, 20/3, -15/4, 6/5, -1/6],
+    (2, 1): [1, -2, 1],
+    (2, 2): [2, -5, 4, -1],
+    (2, 3): [35/12, -26/3, 19/2, -14/3, 11/12],
+    (2, 4): [15/4, -77/6, 107/6, -13, 61/12, -5/6],
+    (2, 5): [203/45, -87/5, 117/4, -254/9, 33/2, -27/5, 137/180],
+    (2, 6): [469/90, -223/10, 879/20, -949/18, 41, -201/10, 1019/180, -7/10],
+    (3, 1): [-1, 3, -3, 1],
+    (3, 2): [-5/2, 9, -12, 7, -3/2],
+    (3, 3): [-17/4, 71/4, -59/2, 49/2, -41/4, 7/4],
+    (3, 4): [-49/8, 29, -461/8, 62, -307/8, 13, -15/8],
+    (4, 1): [1, -4, 6, -4, 1],
+    (4, 2): [3, -14, 26, -24, 11, -2],
+    (4, 3): [35/6, -31, 137/2, -242/3, 107/2, -19, 17/6],
+    (4, 4): [28/3, -111/2, 142, -1219/6, 176, -185/2, 82/3, -7/2],
+}
+    
+    BD_COEFFS = {
+    (1, 1): [1, -1],
+    (1, 2): [1/2, -2, 3/2],
+    (1, 3): [-1/3, 3/2, -3, 11/6],
+    (1, 4): [1/4, -4/3, 3, -4, 25/12],
+    (1, 5): [-1/5, 5/4, -10/3, 5, -5, 137/60],
+    (1, 6): [1/6, -6/5, 15/4, -20/3, 15/2, -6, 49/20],
 
-    modes = [
-        'arithmetic',
-        'weighted',
-        'geometric',
-        'harmonic',
-        'median',
-        'mode',
-        'moving',
-        'trapezoidal'
-    ]
+    (2, 1): [1, -2, 1],
+    (2, 2): [-1, 4, -5, 2],
+    (2, 3): [11/12, -14/3, 19/2, -26/3, 35/12],
+    (2, 4): [-5/6, 61/12, -13, 107/6, -77/6, 15/4],
+    (2, 5): [137/180, -27/5, 33/2, -254/9, 117/4, -87/5, 203/45],
+    (2, 6): [-7/10, 1019/180, -201/10, 41, -949/18, 879/20, -223/10, 469/90],
 
-    weights = [0.1, 0.2, 0.7]
-    time = [0, 1, 2]
+    (3, 1): [-1, 3, -3, 1],
+    (3, 2): [3/2, -7, 12, -9, 5/2],
+    (3, 3): [-7/4, 41/4, -49/2, 59/2, -71/4, 17/4],
+    (3, 4): [15/8, -13, 307/8, -62, 461/8, -29, 49/8],
 
-    print("\n==== Testing average() ====\n")
+    (4, 1): [1, -4, 6, -4, 1],
+    (4, 2): [-2, 11, -24, 26, -14, 3],
+    (4, 3): [17/6, -19, 107/2, -242/3, 137/2, -31, 35/6],
+    (4, 4): [-7/2, 82/3, -185/2, 176, -1219/6, 142, -111/2, 28/3],
+}
 
-    for test in test_cases:
-        print(f"\nTest: {test['name']}")
-        data = test["data"]
-        try:
-            for mode in modes:
-                print(f"\n  Mode: {mode}")
-                try:
-                    if mode == 'weighted':
-                        result = average(data, mode=mode, weights=weights)
-                    elif mode == 'moving':
-                        result = average(data, mode=mode, window=2)
-                    elif mode == 'trapezoidal':
-                        result = average(data, mode=mode, time=time)
-                    else:
-                        result = average(data, mode=mode)
-                    pprint(result)
-                except Exception as e:
-                    print(f"    [Error] {e}")
-        except Exception as err:
-            print(f"[Critical Error] {err}")
+    def CD(y, x, derivative=1, accuracy=4):
+        """
+        Central finite difference derivative calculation.
+        
+        Parameters:
+            y : array_like
+                Function values at discrete points.
+            x : array_like
+                Grid points (must be uniform).
+            derivative : int
+                Derivative order (1, 2, 3, 4).
+            accuracy : int
+                Order of accuracy (2, 4, 6, 8).
+        
+        Returns:
+            dydx : ndarray
+                Derivative array, only for valid central points.
+        """
+        y = np.asarray(y)
+        x = np.asarray(x)
+        h = x[1] - x[0]
+        
+
+        key = (derivative, accuracy)
+        if key not in CD_COEFFS:
+            raise ValueError(f"Unsupported derivative={derivative}, accuracy={accuracy}")
+
+        coeffs = np.array(CD_COEFFS[key])
+        stencil_size = len(coeffs)
+        offset = stencil_size // 2
+
+        dydx = np.full_like(y, np.nan, dtype=float)
+
+        # Apply stencil at interior points
+        for i in range(offset, len(y) - offset):
+            window = y[i - offset:i + offset + 1]
+            dydx[i] = np.dot(coeffs, window) / (h ** derivative)
+
+        return dydx
+
+    def FD(y, x, derivative=1, accuracy=4):
+        """
+        Forward finite difference derivative calculation (for uniform grids).
+        
+        Parameters:
+            y : array_like
+                Function values at discrete points.
+            x : array_like
+                Grid points (must be uniform).
+            derivative : int
+                Derivative order (1, 2, 3, 4).
+            accuracy : int
+                Order of accuracy (1, 2, ..., 6).
+        
+        Returns:
+            dydx : ndarray
+                Derivative array, only at valid forward points (rest are NaN).
+        """
+        y = np.asarray(y)
+        x = np.asarray(x)
+        h = x[1] - x[0]
+        
+
+
+        key = (derivative, accuracy)
+        if key not in FD_COEFFS:
+            raise ValueError(f"Unsupported derivative={derivative}, accuracy={accuracy}")
+
+        coeffs = np.array(FD_COEFFS[key])
+        stencil_size = len(coeffs)
+
+        dydx = np.full_like(y, np.nan, dtype=float)
+
+        for i in range(len(y) - stencil_size + 1):
+            window = y[i:i + stencil_size]
+            dydx[i] = np.dot(coeffs, window) / (h ** derivative)
+
+        return dydx
+
+    def BD(y, x, derivative=1, accuracy=4):
+        """
+        Backward finite difference derivative calculation (for uniform grids).
+        
+        Parameters:
+            y : array_like
+                Function values at discrete points.
+            x : array_like
+                Grid points (must be uniform).
+            derivative : int
+                Derivative order (1, 2, 3, 4).
+            accuracy : int
+                Order of accuracy (1, 2, ...).
+        
+        Returns:
+            dydx : ndarray
+                Derivative array, only at valid backward points (rest are NaN).
+        """
+        y = np.asarray(y)
+        x = np.asarray(x)
+        h = x[1] - x[0]
+
+
+        key = (derivative, accuracy)
+        if key not in FD_COEFFS:
+            raise ValueError(f"Unsupported derivative={derivative}, accuracy={accuracy}")
+
+        coeffs = -np.array(FD_COEFFS[key])[::-1]  # Reverse to align with y[i - n: i + 1]
+        stencil_size = len(coeffs)
+
+        dydx = np.full_like(y, np.nan, dtype=float)
+
+        for i in range(stencil_size - 1, len(y)):
+            window = y[i - stencil_size + 1:i + 1]
+            dydx[i] = np.dot(coeffs, window) / (h ** derivative)
+
+        return dydx
+
+    # === 1. Uniform spacing check ===
+    h_arr = np.diff(x)
+    if not np.allclose(h_arr, h_arr[0]):
+        raise ValueError("Non-uniform spacing detected. This method only supports uniform grids.")
+    h = h_arr[0]
+
+    # === 2. Check accuracy support ===
+    available_keys = set(FD_COEFFS.keys())
+    if (derivative, accuracy) not in available_keys:
+        raise ValueError(f"Accuracy {accuracy} not available for derivative order {derivative}.")
+
+    # === 3. Compute derivatives using each method vectorized ===
+    dydx_fd = FD(y, x, derivative, accuracy)
+    dydx_bd = BD(y, x, derivative, accuracy)
+    dydx_cd = CD(y, x, derivative, accuracy)
+
+    # === 4. Combine results to final output ===
+    coeffs_cd = np.array(CD_COEFFS[(derivative, accuracy)])
+    half_width = len(coeffs_cd) // 2
+    n = len(y)
+
+    dy_dx = np.full_like(y, np.nan, dtype=float)
+
+    # Forward difference at start
+    dy_dx[:half_width] = dydx_fd[:half_width]
+
+    # Backward difference at end
+    dy_dx[-half_width:] = dydx_bd[-half_width:]
+
+    # Central difference in the middle
+    dy_dx[half_width:n - half_width] = dydx_cd[half_width:n - half_width]
+
+    # === 5. Return values ===
+    error_term = f"O(h^{accuracy})"
+    return {
+    "derivative": dy_dx,
+    "x": x,
+    "error_term": error_term}
+
+
+if __name__ == "__main__":
+    # Test the derivative_FDM function
+    
+    # Define grid and function
+    x = np.linspace(0, 2 * np.pi, 100)
+    y = np.sin(x)
+    
+    # Compute first derivative (cosine)
+    results = derivative_FDM(y, x, derivative=1, accuracy=4)
+    dy_dx = results["derivative"]
+    x_out = results["x"]
+    error_term = results["error_term"]
+    
+    # Exact derivative for comparison
+    exact = np.cos(x_out)
+    
+    # Plot results
+    import matplotlib.pyplot as plt
+    plt.plot(x_out, dy_dx, label="Finite Difference Derivative")
+    plt.plot(x_out, exact, '--', label="Exact Derivative")
+    plt.title(f"First derivative using finite difference ({error_term})")
+    plt.legend()
+    plt.show()
+
+
