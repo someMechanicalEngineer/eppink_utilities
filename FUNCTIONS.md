@@ -1529,6 +1529,29 @@ Parameters:
 Returns:
     None
 
+## `QR_generate`
+
+Generates a QR code image, saves it to a specified directory, displays a coordinate plot, 
+and returns the binary matrix representing the QR code.
+
+Creates the folder (including all intermediate directories) if it doesn't exist.
+
+Parameters:
+    data (str): The text or URL to encode in the QR code.
+    filename (str): The name of the output PNG file.
+    path (str): Directory path to save the QR code image.
+    box_size (int): The size of each box in the QR code.
+    border (int): The thickness of the border around the QR code.
+    colorSquare (str): The color of the QR code squares (default: "black").
+    colorBackground (str): The background color of the QR code (default: "white").
+    plotQR (bool): If true, will plot the resulting QR code
+
+Returns:
+    np.ndarray: 2D NumPy array where 1 represents a colored square and 0 represents background.
+
+Raises:
+    OSError: If the directory cannot be created due to permissions or invalid path.
+
 ### From `general_utils.py`
 
 
@@ -1541,6 +1564,7 @@ Parameters:
     *args: Variable length argument list of inputs to be validated and converted.
     dtype: Desired data type of the output arrays (default: float).
     allow_scalar (bool): If False, scalar inputs will raise a ValueError.
+    allow_array (bool): If False, array inputs (ndim > 0) will raise a ValueError.
     check_broadcast (bool): If True, checks that all inputs can be broadcast together.
 
 Returns:
@@ -1548,8 +1572,8 @@ Returns:
 
 Raises:
     TypeError: If any input cannot be converted to the specified dtype.
-    ValueError: If scalar inputs are disallowed but found,
-                or if inputs cannot be broadcast together,
+    ValueError: If scalar or array inputs are disallowed but found,
+                if inputs cannot be broadcast together,
                 or if nan values are present but dtype is integer.
 
 ## `extract_functions_with_docstrings`
@@ -1773,4 +1797,54 @@ Parameters:
   - "Dark2": Darker, high-contrast colors (ideal for better visibility).
 - path: the directory where the plot image will be saved (default is the current directory).
 - ylabel: label for the y-axis (optional).
+
+### From `thermo_utils.py`
+
+
+## `mass_leakrate`
+
+Calculate mass leak rate (kg/s) from pressure change in an isochoric system with four modes.
+
+Modes and formulas:
+    Mode 1:  m_dot = M * V / (R * T) * dP/dt                                (based on molar mass, moles)
+    Mode 2:  m_dot = V * M / (R * T) * dRho/dt                              (based on density change)
+    Mode 3:  m_dot = m / P * dP/dt                                          (relative pressure change)
+    Mode 4:  m_dot = V / (Rspecific * T) * dP/dt                            (using specific gas constant)
+    Mode 5:  m_dot = V * ( dRho/dt - dRho/dP|T dP/dt - dRho/dT|P dT/dt )    (Real gas)
+
+Parameters:
+    mode : str, optional
+        "Mode 1", "Mode 2", "Mode 3", or "Mode 4"
+    M : float
+        Molar mass (kg/mol)
+    V : float
+        Volume (m^3)
+    R : float
+        Universal gas constant (J/(mol·K))
+    T : float
+        Temperature (K)
+    P : float
+        Pressure (Pa)
+    dPdt : array
+        Pressure time derivative (Pa/s)
+    dTdt : array
+        Temperature time derivative (K/s)
+    dRhodt : array
+        Density time derivative (kg/m^3/s)
+    dRhodP : array
+        Density pressure derivative at constant temperature (kg/m^3Pa)
+    dRhodT : array
+        Density Temperature derivative at constant pressure (kg/m^3K)
+    m : float
+        Current mass (kg)
+    Rspecific : float
+        Specific gas constant (J/(kg·K))
+    
+
+Returns:
+    m_dot : float or ndarray
+        Mass leak rate in kg/s.
+
+Raises:
+    ValueError: if required parameters are missing or mode is invalid.
 
