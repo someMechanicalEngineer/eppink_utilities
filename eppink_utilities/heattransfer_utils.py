@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 import warnings
-from math_utils import derivative_FDM
+from .math_utils import derivative_FDM
 
 def conduction_radial_steady_numerical(r, L, bc, k, gridpoints, solver="RK45", tol=1e-3):
     """

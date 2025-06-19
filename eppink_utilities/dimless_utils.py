@@ -1,6 +1,6 @@
 import numpy as np
-from general_utils import validate_inputs
-from math_utils import safe_divide
+from .general_utils import validate_inputs
+from .math_utils import safe_divide
 
 def archimedes(g, L, rho, rho_l, *, mode="dynamic", nu=None, mu=None):
     """

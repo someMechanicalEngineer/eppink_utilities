@@ -333,5 +333,6 @@ def QR_generate(
 
 
 
+
 if __name__ == "__main__":
-    QR_generate("www.google.com")
+    csv_append_data("www.google.com")

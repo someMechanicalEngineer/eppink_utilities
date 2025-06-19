@@ -1,5 +1,5 @@
-from math_utils import safe_divide
-from general_utils import validate_inputs
+from .math_utils import safe_divide
+from .general_utils import validate_inputs
 
 def mass_leakrate(*, mode="Mode 1", M=None, V=None, R=8.31446261815324, T=None, P=None, dPdt=None, dTdt=None, dRhodt=None, dRhodP=None, dRhodT=None, m=None, Rspecific=None):
     """
@@ -83,8 +83,13 @@ def mass_leakrate(*, mode="Mode 1", M=None, V=None, R=8.31446261815324, T=None, 
     elif mode == "Mode 5":
         if V is None or dRhodt is None or dRhodP is None or dRhodT is None or dPdt is None or dTdt is None:
             raise ValueError("Mode 4 requires V, dRhodt, dRhodP, dRhodT, dPdt and dTdt")
+        dRhodt, dRhodP, dRhodT, dPdt, dTdt = validate_inputs(dRhodt, dRhodP, dRhodT, dPdt, dTdt)
+        V = validate_inputs(V, allow_array=False)
+
+
     else:
         raise ValueError("Invalid mode. Choose 'Mode 1', 'Mode 2', 'Mode 3', 'mode4', or 'Mode 5'.")
+
 
 if __name__ == "__main__":
     import numpy as np
