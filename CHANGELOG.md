@@ -75,3 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-19
 ### Changed
 - bugfix where sister library couldn't be accessed
+
+## Version 0.8.0 
+2025-06-19
+### Changed
+- bugfix where sister library couldn't be accessed
