@@ -1,6 +1,9 @@
 import os
 import csv
 from datetime import datetime
+import qrcode
+import numpy as np
+import matplotlib.pyplot as plt
 
 def generate_timestamp():
     """
@@ -260,3 +263,75 @@ def markdown_append(text, filename, path=None) -> None:
                     raise ValueError("Unsupported item type in list passed to markdown_append.")
         else:
             raise TypeError("markdown_append expects a string or a list.")
+
+def QR_generate(
+    data,
+    filename="qrcode.png",
+    path=".",
+    box_size=10,
+    border=4,
+    colorSquare="black",
+    colorBackground="white",
+    plotQR=False
+):
+    """
+    Generates a QR code image, saves it to a specified directory, displays a coordinate plot, 
+    and returns the binary matrix representing the QR code.
+
+    Creates the folder (including all intermediate directories) if it doesn't exist.
+
+    Parameters:
+        data (str): The text or URL to encode in the QR code.
+        filename (str): The name of the output PNG file.
+        path (str): Directory path to save the QR code image.
+        box_size (int): The size of each box in the QR code.
+        border (int): The thickness of the border around the QR code.
+        colorSquare (str): The color of the QR code squares (default: "black").
+        colorBackground (str): The background color of the QR code (default: "white").
+        plotQR (bool): If true, will plot the resulting QR code
+
+    Returns:
+        np.ndarray: 2D NumPy array where 1 represents a colored square and 0 represents background.
+
+    Raises:
+        OSError: If the directory cannot be created due to permissions or invalid path.
+    """
+
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=box_size,
+        border=border,
+    )
+    
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    # Create and save QR code image with custom colors
+    img = qr.make_image(fill_color=colorSquare, back_color=colorBackground)
+    
+    # Ensure directory exists
+    os.makedirs(path, exist_ok=True)
+    full_path = os.path.join(path, filename)
+    img.save(full_path)
+    print(f"QR Code saved as '{full_path}'")
+
+    # Convert QR code to NumPy array (1 for colorSquare, 0 for colorBackground)
+    qr_matrix = np.array(qr.modules).astype(int)
+
+    # Extract black box coordinates for plotting
+    coordinates = [(x, y) for y, row in enumerate(qr_matrix) for x, value in enumerate(row) if value == 1]
+    
+    # Plot QR Code
+    if plotQR:
+        plt.figure(figsize=(6, 6))
+        plt.imshow(qr_matrix, cmap='gray_r', interpolation='none')  # Always black on white
+        plt.axis("off")
+        plt.title(data)
+        plt.show()
+
+
+
+if __name__ == "__main__":
+    QR_generate("www.google.com")

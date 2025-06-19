@@ -2,7 +2,7 @@ import numpy as np
 import ast
 import os
 
-def validate_inputs(*args, dtype=float, allow_scalar=True, check_broadcast=True):
+def validate_inputs(*args, dtype=float, allow_scalar=True, allow_array=True, check_broadcast=True):
     """
     Validates and converts inputs to NumPy arrays of the specified dtype,
     ensuring that np.nan values are preserved if dtype supports them.
@@ -11,6 +11,7 @@ def validate_inputs(*args, dtype=float, allow_scalar=True, check_broadcast=True)
         *args: Variable length argument list of inputs to be validated and converted.
         dtype: Desired data type of the output arrays (default: float).
         allow_scalar (bool): If False, scalar inputs will raise a ValueError.
+        allow_array (bool): If False, array inputs (ndim > 0) will raise a ValueError.
         check_broadcast (bool): If True, checks that all inputs can be broadcast together.
 
     Returns:
@@ -18,18 +19,18 @@ def validate_inputs(*args, dtype=float, allow_scalar=True, check_broadcast=True)
 
     Raises:
         TypeError: If any input cannot be converted to the specified dtype.
-        ValueError: If scalar inputs are disallowed but found,
-                    or if inputs cannot be broadcast together,
+        ValueError: If scalar or array inputs are disallowed but found,
+                    if inputs cannot be broadcast together,
                     or if nan values are present but dtype is integer.
     """
+
     arrays = []
     for arg in args:
         arr_raw = np.asarray(arg)  # no dtype yet, preserves nans
+
         if np.any(np.isnan(arr_raw)):
-            # Check if dtype supports nan:
             if np.issubdtype(dtype, np.integer):
                 raise ValueError(f"Input {arg} contains NaN but dtype={dtype} does not support NaN.")
-            # else dtype supports nan, proceed
 
         try:
             arr = np.asarray(arg, dtype=dtype)
@@ -38,6 +39,9 @@ def validate_inputs(*args, dtype=float, allow_scalar=True, check_broadcast=True)
 
         if not allow_scalar and arr.ndim == 0:
             raise ValueError(f"Scalar input {arg} not allowed.")
+
+        if not allow_array and arr.ndim > 0:
+            raise ValueError(f"Array input {arg} not allowed.")
 
         arrays.append(arr)
 
