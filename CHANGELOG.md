@@ -71,3 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-18
 ### Changed
 - Added derivative_FDM and conduction_radial_numerical functions
+## Version 0.7.1 
+2025-06-19
+### Changed
+- bugfix where sister library couldn't be accessed
