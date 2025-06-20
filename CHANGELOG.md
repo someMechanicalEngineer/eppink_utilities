@@ -95,3 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-20
 ### Changed
 - bugfix. Removed a print command from csv_open which floods the terminal
+
+## Version 0.10.0 
+2025-06-20
+### Changed
+- Addition of function dataset_splitheaderfromdata
