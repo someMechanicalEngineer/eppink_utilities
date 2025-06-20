@@ -114,7 +114,7 @@ Returns:
         binned_data (list of np.ndarray): List with one array per bin containing rows in that bin.
         bin_labels (np.ndarray): same as above
 
-## `data_combine`
+## `dataset_combine`
 
 Merge multiple datasets by time binning and trapezoidal averaging.
 
@@ -130,6 +130,18 @@ Returns:
     np.ndarray: 2D array with shape (n_bins, 1 + sum of columns per dataset - 1),
                 where first column is the bin time (left edge),
                 and remaining columns are averaged values from all datasets.
+
+## `dataset_SplitHeaderFromData`
+
+Splits the header row from a dataset if present.
+
+Parameters:
+    dataset (list of list): Raw dataset where the first row may be a header.
+
+Returns:
+    tuple: (header, data)
+        - header (list or None): The header row if detected, else None.
+        - data (list of list): The remaining dataset with only numeric rows.
 
 ### From `dimless_utils.py`
 
