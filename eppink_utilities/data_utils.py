@@ -228,7 +228,7 @@ def data_bin(data, mode='range', *, dt=None, bin_column=None, returnmode='indice
     else:
         raise ValueError("returnmode must be either 'indices' or 'binned'")
 
-def data_combine(*datasets, avgMode='trapezoidal', dt):
+def dataset_combine(*datasets, avgMode='trapezoidal', dt):
     """
     Merge multiple datasets by time binning and trapezoidal averaging.
 
@@ -282,6 +282,35 @@ def data_combine(*datasets, avgMode='trapezoidal', dt):
         merged_columns.append(binned_means)
 
     return np.hstack(merged_columns)
+
+def dataset_SplitHeaderFromData(dataset):
+    """
+    Splits the header row from a dataset if present.
+
+    Parameters:
+        dataset (list of list): Raw dataset where the first row may be a header.
+
+    Returns:
+        tuple: (header, data)
+            - header (list or None): The header row if detected, else None.
+            - data (list of list): The remaining dataset with only numeric rows.
+    """
+    if not dataset:
+        return None, []
+
+    first_row = dataset[0]
+
+    def is_row_numeric(row):
+        try:
+            [float(cell) for cell in row]
+            return True
+        except ValueError:
+            return False
+
+    if is_row_numeric(first_row):
+        return None, dataset  # No header, all data is numeric
+    else:
+        return first_row, dataset[1:]  # Header exists
 
 
 if __name__ == "__main__":
