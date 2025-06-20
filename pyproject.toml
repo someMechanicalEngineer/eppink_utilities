@@ -1,6 +1,6 @@
 [project]
 name = "eppink-utilities"
-version = "0.9.1"
+version = "0.9.2"
 description = "Useful utilities for data processing, plotting, and file handling"
 readme = "README.md"
 requires-python = ">=3.7"
