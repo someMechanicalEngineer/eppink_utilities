@@ -236,34 +236,44 @@ def dataset_combine(*datasets, avgMode='trapezoidal', dt):
         *datasets: Each dataset is a 2D array-like of shape (n_rows, n_columns),
                    where column 0 is time (in seconds).
         dt (float): Width of time bins.
-        mode (str): Averaging mode. Common options:
-            - 'arithmetic': Simple mean (Recommended if little data exists in the bins)
-            - 'trapezoidal': Integral-based average (default, produces nan's if little data exists in the bins)
+        avgMode (str): Averaging mode ('arithmetic' or 'trapezoidal').
 
     Returns:
-        np.ndarray: 2D array with shape (n_bins, 1 + sum of columns per dataset - 1),
-                    where first column is the bin time (left edge),
-                    and remaining columns are averaged values from all datasets.
+        tuple: (header: list[str], data: np.ndarray, full_data: list[list])
     """
-    datasets = [np.asarray(d) for d in datasets if d is not None and len(d) > 0]
+    import numpy as np
 
-    if not datasets:
-        return np.empty((0, 0))
+    headers = []
+    arrays = []
 
-    # Determine common bin edges based on earliest start and latest end
-    t_min = min(np.nanmin(d[:, 0]) for d in datasets)
-    t_max = max(np.nanmax(d[:, 0]) for d in datasets)
+    for d in datasets:
+        # Handle case where header is included (e.g. from CSV)
+        if isinstance(d, list) and isinstance(d[0], list) and isinstance(d[0][0], str):
+            header_row, d = d[0], d[1:]
+            headers.extend(header_row[1:])  # Skip time column
+            d = np.array(d, dtype=float)
+        else:
+            d = np.array(d, dtype=float)
+            headers.extend([f"Var{i}" for i in range(1, d.shape[1])])  # fallback names
+
+        arrays.append(d)
+
+    if not arrays:
+        return [], np.empty((0, 0)), []
+
+    # Determine bin edges
+    t_min = min(np.nanmin(d[:, 0]) for d in arrays)
+    t_max = max(np.nanmax(d[:, 0]) for d in arrays)
     bin_edges = np.arange(np.floor(t_min), np.ceil(t_max) + dt, dt)
     n_bins = len(bin_edges) - 1
-    t_out = bin_edges[:-1]  # left edge of bins
+    t_out = bin_edges[:-1].reshape(-1, 1)  # (n_bins, 1)
 
-    merged_columns = [t_out.reshape(-1, 1)]  # start with time column
+    merged_columns = [t_out]
 
-    for data in datasets:
+    for data in arrays:
         t = data[:, 0]
         features = data[:, 1:]
 
-        # Bin assignment: left-edge inclusive
         inds = np.digitize(t, bin_edges) - 1
         inds[(t < bin_edges[0]) | (t >= bin_edges[-1])] = -1
 
@@ -278,10 +288,15 @@ def dataset_combine(*datasets, avgMode='trapezoidal', dt):
                     time=t[mask]
                 )
 
-
         merged_columns.append(binned_means)
 
-    return np.hstack(merged_columns)
+    data = np.hstack(merged_columns)
+    header = ["Time [s]"] + headers
+
+    # Combine header + data for full_data as list-of-lists
+    full_data = [header] + data.tolist()
+
+    return header, data, full_data
 
 def dataset_SplitHeaderFromData(dataset):
     """
@@ -314,18 +329,26 @@ def dataset_SplitHeaderFromData(dataset):
 
 
 if __name__ == "__main__":
-    d1 = np.array([
-        [0.1, 10],
-        [0.3, 20],
-        [0.6, 30],
-        [1.1, 40],
-    ])
-    
-    d2 = np.array([
-        [0.2, 100],
-        [0.9, 200],
-        [1.4, 300],
-    ])
+    import numpy as np
 
-    result = data_combine(d1, d2, d2, dt=0.5, avgMode="arithmetic")
-    print(result)
+    # Simulated CSV-style data with headers
+    data1 = [['Time [s]', 'T1', 'T2']]
+    data2 = [['Time [s]', 'P1']]
+
+    # Add 16 rows to data1 (timestamps 0 to 15)
+    for i in range(16):
+        data1.append([str(i), str(20 + i * 0.5), str(21 + i * 0.3)])
+
+    # Add 15 rows to data2 (timestamps 0 to 14)
+    for i in range(15):
+        data2.append([str(i), str(1.0 + i * 0.1)])
+
+    # Test with header-containing string data
+    header, data, full = dataset_combine(data1, data2, dt=1, avgMode="arithmetic")
+
+    print("Test: Header-containing datasets")
+    print("Header:", header)
+    print("Data shape:", data.shape)
+    print("First 5 rows of data:\n", data[:5])
+    print("First 5 rows of full output:\n", full[:5])
+
