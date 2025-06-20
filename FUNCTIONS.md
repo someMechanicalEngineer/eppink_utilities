@@ -122,14 +122,10 @@ Parameters:
     *datasets: Each dataset is a 2D array-like of shape (n_rows, n_columns),
                where column 0 is time (in seconds).
     dt (float): Width of time bins.
-    mode (str): Averaging mode. Common options:
-        - 'arithmetic': Simple mean (Recommended if little data exists in the bins)
-        - 'trapezoidal': Integral-based average (default, produces nan's if little data exists in the bins)
+    avgMode (str): Averaging mode ('arithmetic' or 'trapezoidal').
 
 Returns:
-    np.ndarray: 2D array with shape (n_bins, 1 + sum of columns per dataset - 1),
-                where first column is the bin time (left edge),
-                and remaining columns are averaged values from all datasets.
+    tuple: (header: list[str], data: np.ndarray, full_data: list[list])
 
 ## `dataset_SplitHeaderFromData`
 
