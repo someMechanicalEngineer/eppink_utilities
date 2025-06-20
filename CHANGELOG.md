@@ -104,3 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-20
 ### Changed
 - bugfix dataset_combine.
+
+## Version 0.11.0 
+2025-06-21
+### Changed
+- changed csv_filecheck into a more general file_check and added data_remove_columns
