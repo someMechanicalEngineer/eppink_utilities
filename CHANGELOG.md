@@ -85,3 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-20
 ### Changed
 - Added functions such as mass_leakrate,  catastrophic_cancellation, data_combine, data_bin, data_column_combine
+
+## Version 0.9.1 
+2025-06-20
+### Changed
+- fixed a bug where the file_utils were trying to open or write to the wrong directory.
