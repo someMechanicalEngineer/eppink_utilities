@@ -1,6 +1,8 @@
 import numpy as np
+import math
 from scipy import stats
 from scipy.integrate import trapezoid
+from .general_utils import validate_inputs
 
 def average(data, mode='arithmetic', weights=None, window=2, time=None):
     """
@@ -397,36 +399,47 @@ def derivative_FDM(y, x, derivative, accuracy):
     # Central difference in the middle
     dy_dx[half_width:n - half_width] = dydx_cd[half_width:n - half_width]
 
+    error_est = safe_divide((x[1] - x[0]) ** accuracy, math.factorial(accuracy)) * y ** (derivative + accuracy) 
+
     # === 5. Return values ===
     error_term = f"O(h^{accuracy})"
     return {
     "derivative": dy_dx,
     "x": x,
-    "error_term": error_term}
+    "error_term": error_term,
+    "error_estimation": error_est}
+
+def error_catastrophic_cancellation(x, y, deltax, deltay):
+    """
+    Estimate the relative error in a subtraction due to catastrophic cancellation.
+    
+    Parameters:
+        x : float or np.ndarray
+            First approximate value(s).
+        y : float or np.ndarray
+            Second approximate value(s).
+        deltax : float or np.ndarray
+            Relative error(s) in x (i.e., delta_x / x).
+        deltay : float or np.ndarray
+            Relative error(s) in y (i.e., delta_y / y).
+    
+    Returns:
+        rel_error : float or np.ndarray
+            Estimated relative error in the computed difference (x - y) due to cancellation,
+            given by |x * deltax - y * deltay| / |x - y|.
+    """
+
+    x, y, deltax, deltay = validate_inputs(x, y, deltax, deltay, check_broadcast=True, scalars_to_arrays=True)
+    rel_error = safe_divide(np.abs(x * deltax - y * deltay), np.abs(x - y))
+    return rel_error
+
 
 
 if __name__ == "__main__":
-    # Test the derivative_FDM function
-    
-    # Define grid and function
-    x = np.linspace(0, 2 * np.pi, 100)
-    y = np.sin(x)
-    
-    # Compute first derivative (cosine)
-    results = derivative_FDM(y, x, derivative=1, accuracy=4)
-    dy_dx = results["derivative"]
-    x_out = results["x"]
-    error_term = results["error_term"]
-    
-    # Exact derivative for comparison
-    exact = np.cos(x_out)
-    
-    # Plot results
-    import matplotlib.pyplot as plt
-    plt.plot(x_out, dy_dx, label="Finite Difference Derivative")
-    plt.plot(x_out, exact, '--', label="Exact Derivative")
-    plt.title(f"First derivative using finite difference ({error_term})")
-    plt.legend()
-    plt.show()
+    x = np.linspace(1, 10, 10)
+    y1 = derivative_FDM(x ** 2, x, 1, 4)
+    y2 = derivative_FDM(x ** 3, x, 1, 4)
 
 
+    result1 = error_catastrophic_cancellation(y1["derivative"], y2["derivative"], y1["error_estimation"], y2["error_estimation"])
+    print("Case 1 - Scalars for deltas:\n", result1)

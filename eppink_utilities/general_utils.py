@@ -2,7 +2,7 @@ import numpy as np
 import ast
 import os
 
-def validate_inputs(*args, dtype=float, allow_scalar=True, allow_array=True, check_broadcast=True):
+def validate_inputs(*args, dtype=float, allow_scalar=True, allow_array=True, check_broadcast=True, scalars_to_arrays=False):
     """
     Validates and converts inputs to NumPy arrays of the specified dtype,
     ensuring that np.nan values are preserved if dtype supports them.
@@ -50,6 +50,31 @@ def validate_inputs(*args, dtype=float, allow_scalar=True, allow_array=True, che
             np.broadcast(*arrays)
         except ValueError as e:
             raise ValueError("Inputs are not broadcast-compatible.") from e
+        
+        if scalars_to_arrays and len(arrays) > 1:
+            # Find reference shape: largest shape by total size, ignoring empty tuple
+            ref_shape = None
+            max_size = 0
+            for arr in arrays:
+                size = np.prod(arr.shape)
+                if size > max_size:
+                    max_size = size
+                    ref_shape = arr.shape
+
+            # If all inputs are scalars (size=1), ref_shape might be ():
+            # So fallback to (1,) shape to allow broadcasting of scalars
+            if ref_shape == ():
+                ref_shape = (1,)
+
+            # Broadcast scalars and (1,) arrays to the reference shape
+            arrays = tuple(
+                np.broadcast_to(arr, ref_shape)
+                if arr.ndim == 0 or arr.shape == (1,)
+                else arr
+                for arr in arrays
+            )
+
+
 
     return (*arrays,)
 

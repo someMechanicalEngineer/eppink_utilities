@@ -1,9 +1,10 @@
 from .math_utils import safe_divide
 from .general_utils import validate_inputs
+from .math_utils import error_catastrophic_cancellation
 
 def mass_leakrate(*, mode="Mode 1", M=None, V=None, R=8.31446261815324, T=None, P=None, dPdt=None, dTdt=None, dRhodt=None, dRhodP=None, dRhodT=None, m=None, Rspecific=None):
     """
-    Calculate mass leak rate (kg/s) from pressure change in an isochoric system with four modes.
+    Calculate mass leak rate (kg/s) from pressure change in an isochoric system with five modes.
 
     Modes and formulas:
         Mode 1:  m_dot = M * V / (R * T) * dP/dt                                (based on molar mass, moles)
@@ -12,9 +13,11 @@ def mass_leakrate(*, mode="Mode 1", M=None, V=None, R=8.31446261815324, T=None, 
         Mode 4:  m_dot = V / (Rspecific * T) * dP/dt                            (using specific gas constant)
         Mode 5:  m_dot = V * ( dRho/dt - dRho/dP|T dP/dt - dRho/dT|P dT/dt )    (Real gas)
 
+        Ensure that all the derivatives are evaluated at the corresponding timestep.
+
     Parameters:
         mode : str, optional
-            "Mode 1", "Mode 2", "Mode 3", or "Mode 4"
+            "Mode 1", "Mode 2", "Mode 3", "Mode4" or "Mode 5"
         M : float
             Molar mass (kg/mol)
         V : float
@@ -85,7 +88,8 @@ def mass_leakrate(*, mode="Mode 1", M=None, V=None, R=8.31446261815324, T=None, 
             raise ValueError("Mode 4 requires V, dRhodt, dRhodP, dRhodT, dPdt and dTdt")
         dRhodt, dRhodP, dRhodT, dPdt, dTdt = validate_inputs(dRhodt, dRhodP, dRhodT, dPdt, dTdt)
         V = validate_inputs(V, allow_array=False)
-
+        V, dRhodt, dRhodP, dRhodT, dPdt, dTdt = validate_inputs(V, dRhodt, dRhodP, dRhodT, dPdt, dTdt, check_broadcast=True)
+        return V * (dRhodt - dRhodP * dPdt - dRhodT * dTdt)
 
     else:
         raise ValueError("Invalid mode. Choose 'Mode 1', 'Mode 2', 'Mode 3', 'mode4', or 'Mode 5'.")
@@ -93,20 +97,96 @@ def mass_leakrate(*, mode="Mode 1", M=None, V=None, R=8.31446261815324, T=None, 
 
 if __name__ == "__main__":
     import numpy as np
+    import matplotlib.pyplot as plt
+    import eppink_utilities as EU
+    import CoolProp.CoolProp as CP
 
-    # Example inputs
-    M = 0.02897          # molar mass of air in kg/mol
-    V = 1e-3             # volume in m^3 (1 L)
-    T = 300.0            # temperature in K
-    P = 101325.0         # pressure in Pa (1 atm)
-    m = 1.2e-3           # mass in kg (approximate air mass in 1L at STP)
-    Rspecific = 287.0    # specific gas constant for air in J/(kg·K)
-    
-    # Time derivative arrays (simulated)
-    dPdt = np.array([-10, -20, -15, -5])       # pressure drop rate in Pa/s
-    dRhodt = np.array([-0.01, -0.02, -0.015, -0.005])  # density change rate in kg/m³/s
+    # Time vector
+    dt = 0.1  # seconds
+    n_points = 1000
+    t = np.linspace(0, dt * (n_points - 1), n_points)  # total duration: 9.9 s
 
-    print("Mode 1 mass leak rate:", mass_leakrate(mode="Mode 1", M=M, V=V, T=T, P=P, dPdt=dPdt))
-    print("Mode 2 mass leak rate:", mass_leakrate(mode="Mode 2", M=M, V=V, T=T, P=P, dRhodt=dRhodt))
-    print("Mode 3 mass leak rate:", mass_leakrate(mode="Mode 3", m=m, P=P, dPdt=dPdt))
-    print("Mode 4 mass leak rate:", mass_leakrate(mode="Mode 4", V=V, Rspecific=Rspecific, T=T, dPdt=dPdt))
+    # Pressure data (Pa) - oscillations around atmospheric pressure
+    P = 101325 - 50000 * np.sin(0.025 * t)
+
+
+    # Temperature data (K) - slow ramp + oscillations
+    T = 300 + 0 * t
+
+    # Compute derivatives of density w.r.t. T and P, and density itself
+    # NOTE: PropsSI may not support vectorized inputs, so we do elementwise
+    dRhodT = np.array([CP.PropsSI('d(D)/d(T)|P', 'P', p, 'T', temp, 'N2') for p, temp in zip(P, T)])
+    dRhodP = np.array([CP.PropsSI('d(D)/d(P)|T', 'P', p, 'T', temp, 'N2') for p, temp in zip(P, T)])
+    Rho = np.array([CP.PropsSI('D', 'P', p, 'T', temp, 'N2') for p, temp in zip(P, T)])
+
+    # Compute time derivatives using your finite difference method
+    A = EU.math_utils.derivative_FDM(Rho, t, 1, 6)
+    dRhodt = A["derivative"]
+    errorest = A["error_estimation"]
+    B = EU.math_utils.derivative_FDM(P, t, 1, 6)
+    dPdt = B["derivative"]
+    C = EU.math_utils.derivative_FDM(T, t, 1, 6)
+    dTdt = C["derivative"]
+
+
+
+    # Calculate mass leak rate (Mode 5)
+    dmdt = EU.thermo_utils.mass_leakrate(
+        mode="Mode 5",
+        dPdt=dPdt,
+        dTdt=dTdt,
+        dRhodt=dRhodt,
+        dRhodT=dRhodT,
+        dRhodP=dRhodP,
+        V=1.0  # Add volume or any other required parameters if needed
+    )
+
+    Cerror = EU.math_utils.error_catastrophic_cancellation(dRhodt,(dRhodT * dTdt + dRhodP * dPdt),errorest,errorest)
+
+    plt.figure(figsize=(18, 8))
+
+    # Row 1
+    plt.subplot(2, 3, 1)
+    plt.plot(t, P)
+    plt.title("Pressure vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Pressure (Pa)")
+
+    plt.subplot(2, 3, 2)
+    plt.plot(t, dRhodP)
+    plt.title("dRhodP vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("dRhodP (not K)")
+
+    plt.subplot(2, 3, 3)
+    plt.plot(t, dmdt)
+    plt.title("Mass Leak Rate vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Mass Leak Rate (kg/s)")
+
+    # Row 2
+    plt.subplot(2, 3, 4)
+    plt.plot(t, dPdt)
+    plt.title("dP/dt vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("dP/dt (Pa/s)")
+
+    plt.subplot(2, 3, 5)
+    plt.plot(t, dRhodt)
+    plt.title("dRho/dt vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("dRho/dt (kg/m^3/s)")
+
+    plt.subplot(2, 3, 6)
+    plt.plot(t, errorest)
+    plt.title("catastrophic cancellation error vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("CCE")
+
+
+
+
+    plt.tight_layout()
+    plt.show()
+
+
