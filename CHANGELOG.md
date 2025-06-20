@@ -90,3 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-20
 ### Changed
 - fixed a bug where the file_utils were trying to open or write to the wrong directory.
+
+## Version 0.9.2 
+2025-06-20
+### Changed
+- bugfix. Removed a print command from csv_open which floods the terminal
