@@ -17,19 +17,19 @@
 # Exit on any error
 set -e
 
-# === STEP 0: Commit uncommitted changes if any ===
-if ! git diff-index --quiet HEAD --; then
-  echo "Uncommitted changes detected. Auto-committing before version bump..."
-  git add .
-  git commit -m "Auto-commit: save work before version bump"
-else
-  echo "No uncommitted changes detected."
-fi
-
-# === STEP 1: Update requirements.txt ===
+# === STEP 0: Update requirements.txt ===
 echo "Updating requirements.txt..."
 pipreqs . --force
 echo "requirements.txt updated successfully."
+
+# === STEP 1: Commit uncommitted changes if any ===
+if ! git diff-index --quiet HEAD --; then
+  echo "Uncommitted changes detected. Auto-committing before version bump..."
+  git add .
+  git commit -m "Auto-commit: update requirements.txt and save work before version bump"
+else
+  echo "No uncommitted changes detected."
+fi
 
 # === STEP 3: Update FUNCTIONS ===
 
