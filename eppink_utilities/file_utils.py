@@ -90,7 +90,7 @@ def csv_create(filename, header, path=None):
         str: The full path to the CSV file.
     """
     
-    directory = path or os.path.dirname(os.path.abspath(__file__))
+    directory = path or os.getcwd()
     folder_create(directory)  # ensure the directory exists
     
     file_path = os.path.join(directory, filename)
@@ -125,7 +125,7 @@ def csv_append_row(filename, row, path=None):
         - Data is appended at the end of the file without modifying existing contents.
         - It is the caller’s responsibility to ensure the row structure matches the CSV.
     """
-    directory = path or os.path.dirname(os.path.abspath(__file__))
+    directory = path or os.getcwd()
     file_path = os.path.join(directory, filename)
 
     with open(file_path, mode="a", newline='') as file:
@@ -151,7 +151,7 @@ def csv_append_data(filename, data, path=None):
         - All rows in 'data' are appended in the order they appear in the list.
         - It is the caller’s responsibility to ensure each row has the correct format.
     """
-    directory = path or os.path.dirname(os.path.abspath(__file__))
+    directory = path or os.getcwd()
     file_path = os.path.join(directory, filename)
 
     with open(file_path, mode="a", newline='') as file:
@@ -175,7 +175,7 @@ def csv_open(filename, path=None):
         - The entire contents of the CSV are loaded into memory.
         - Prints the contents to the terminal row by row.
     """
-    directory = path or os.path.dirname(os.path.abspath(__file__))
+    directory = path or os.getcwd()
     file_path = os.path.join(directory, filename)
 
     with open(file_path, mode="r", newline='') as file:
