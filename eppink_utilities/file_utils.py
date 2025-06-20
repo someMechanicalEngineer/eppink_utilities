@@ -182,9 +182,7 @@ def csv_open(filename, path=None):
         reader = csv.reader(file)
         contents = list(reader)
 
-    print(f"Contents of '{file_path}':")
-    for row in contents:
-        print(row)
+    print(f"Opened '{file_path}':")
 
     return contents
 
