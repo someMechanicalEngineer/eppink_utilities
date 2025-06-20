@@ -103,6 +103,85 @@ def data_remove_rows(contents, indices):
     indices_set = set(indices)  # For faster lookup
     return [row for i, row in enumerate(contents) if i not in indices_set]
 
+def data_remove_columns(contents, columns, mode='remove', inputmode='index'):
+    """
+    Remove or keep specified columns from CSV-like data (list of lists).
+
+    Parameters:
+        contents (list of lists): CSV data, first row is header if inputmode='header'.
+        columns (list): List of column indices (int) or header names (str).
+        mode (str): 'remove' to drop listed columns, 'keep' to keep only listed columns.
+        inputmode (str): 'index' if columns are indices, 'header' if columns are header names.
+
+    Returns:
+        list of lists: New contents with columns removed or kept accordingly.
+
+    Raises:
+        ValueError: If invalid mode, inputmode, duplicates, or invalid column names/indices.
+    """
+
+    if mode not in ('remove', 'keep'):
+        raise ValueError(f"Invalid mode '{mode}'. Must be 'remove' or 'keep'.")
+    if inputmode not in ('index', 'header'):
+        raise ValueError(f"Invalid inputmode '{inputmode}'. Must be 'index' or 'header'.")
+
+    if not contents or not contents[0]:
+        # No data or no header row to work with
+        return []
+
+    header = contents[0]
+    n_cols = len(header)
+
+    # Remove duplicates and keep order
+    def unique(seq):
+        seen = set()
+        return [x for x in seq if not (x in seen or seen.add(x))]
+
+    columns = unique(columns)
+    if len(columns) < 1:
+        # Nothing specified, just return all columns as-is
+        return contents.copy()
+
+    if inputmode == 'header':
+        # Validate header exists
+        if not isinstance(header, list):
+            raise ValueError("First row must be a list of header names.")
+
+        # Map headers to indices
+        try:
+            col_indices = [header.index(col) for col in columns]
+        except ValueError as e:
+            raise ValueError(f"Column name not found: {e}")
+
+    else:
+        # inputmode == 'index'
+        # Validate all indices are ints and in range
+        if not all(isinstance(c, int) for c in columns):
+            raise ValueError("All columns must be integers when inputmode='index'.")
+        if any(c < 0 or c >= n_cols for c in columns):
+            raise ValueError(f"Column index out of range. Allowed 0 to {n_cols-1}.")
+        col_indices = columns
+
+    col_indices_set = set(col_indices)
+
+    if mode == 'remove':
+        # Keep all columns NOT in col_indices
+        cols_to_keep = [i for i in range(n_cols) if i not in col_indices_set]
+    else:
+        # mode == 'keep'
+        cols_to_keep = col_indices
+
+    # Build new contents with selected columns
+    new_contents = []
+    for row in contents:
+        # Defensive: skip rows with unexpected length
+        if len(row) < n_cols:
+            raise ValueError("Row length shorter than header length.")
+        new_row = [row[i] for i in cols_to_keep]
+        new_contents.append(new_row)
+
+    return new_contents
+
 def data_columns_combine(*args, check_rows=True):
     """
     Combine multiple 1D column vectors or 2D matrices into a single 2D array (column-wise).
@@ -329,26 +408,71 @@ def dataset_SplitHeaderFromData(dataset):
 
 
 if __name__ == "__main__":
-    import numpy as np
+    sample = [
+        ["Time", "Temp", "Pressure", "Humidity", "Wind"],
+        [0, 20.1, 1.01, 30, 5],
+        [1, 21.3, 1.02, 31, 6],
+        [2, 19.8, 1.00, 29, 7],
+        [3, 20.0, 1.03, 32, 4],
+    ]
 
-    # Simulated CSV-style data with headers
-    data1 = [['Time [s]', 'T1', 'T2']]
-    data2 = [['Time [s]', 'P1']]
+    print("Original data:")
+    for row in sample:
+        print(row)
 
-    # Add 16 rows to data1 (timestamps 0 to 15)
-    for i in range(16):
-        data1.append([str(i), str(20 + i * 0.5), str(21 + i * 0.3)])
+    # Remove by index
+    print("\nRemove columns by index [2,4]:")
+    removed = data_remove_columns(sample, [2, 4], mode='remove', inputmode='index')
+    for row in removed:
+        print(row)
 
-    # Add 15 rows to data2 (timestamps 0 to 14)
-    for i in range(15):
-        data2.append([str(i), str(1.0 + i * 0.1)])
+    # Keep by index
+    print("\nKeep columns by index [0,1]:")
+    kept = data_remove_columns(sample, [0, 1], mode='keep', inputmode='index')
+    for row in kept:
+        print(row)
 
-    # Test with header-containing string data
-    header, data, full = dataset_combine(data1, data2, dt=1, avgMode="arithmetic")
+    # Remove by header
+    print("\nRemove columns by header ['Pressure', 'Wind']:")
+    removed_h = data_remove_columns(sample, ['Pressure', 'Wind'], mode='remove', inputmode='header')
+    for row in removed_h:
+        print(row)
 
-    print("Test: Header-containing datasets")
-    print("Header:", header)
-    print("Data shape:", data.shape)
-    print("First 5 rows of data:\n", data[:5])
-    print("First 5 rows of full output:\n", full[:5])
+    # Keep by header
+    print("\nKeep columns by header ['Time', 'Humidity']:")
+    kept_h = data_remove_columns(sample, ['Time', 'Humidity'], mode='keep', inputmode='header')
+    for row in kept_h:
+        print(row)
 
+    # Edge case: empty columns list (should return full dataset)
+    print("\nEmpty columns list (mode='remove'):")
+    no_change = data_remove_columns(sample, [], mode='remove', inputmode='index')
+    for row in no_change:
+        print(row)
+
+    # Edge case: duplicate columns input
+    try:
+        print("\nDuplicate column indices:")
+        data_remove_columns(sample, [1, 1], mode='remove', inputmode='index')
+    except ValueError as e:
+        print("Caught error:", e)
+
+    try:
+        print("\nDuplicate column headers:")
+        data_remove_columns(sample, ['Temp', 'Temp'], mode='remove', inputmode='header')
+    except ValueError as e:
+        print("Caught error:", e)
+
+    # Edge case: invalid column name
+    try:
+        print("\nInvalid column header:")
+        data_remove_columns(sample, ['Nonexistent'], mode='remove', inputmode='header')
+    except ValueError as e:
+        print("Caught error:", e)
+
+    # Edge case: invalid column index
+    try:
+        print("\nInvalid column index:")
+        data_remove_columns(sample, [10], mode='remove', inputmode='index')
+    except ValueError as e:
+        print("Caught error:", e)

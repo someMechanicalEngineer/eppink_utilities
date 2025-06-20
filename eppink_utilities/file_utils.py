@@ -59,21 +59,21 @@ def folder_create_structure(base_path, structure: dict) -> None:
         if isinstance(subfolders, dict):
             folder_create_structure(current_path, subfolders)
 
-def csv_filecheck(filename, path=None):
+def file_check(filename, path=None):
     """
-    Check if a CSV file exists at a specified location.
+    Check if a file exists at a specified location.
 
     Parameters:
-        filename (str): The name of the CSV file to check (e.g., 'data.csv').
+        filename (str): The name of the file to check (e.g., 'data.csv' or 'report.txt').
         path (str, optional): The directory path where the file should be located.
-            If None, the function defaults to the directory of the current script.
+            If None, defaults to the directory of the current script.
 
     Returns:
         bool: True if the file exists at the resolved location, False otherwise.
     """
-    if path is None:
-        path = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(path, filename)
+    directory = path or os.getcwd()
+    folder_create(directory)  # ensure the directory exists
+    file_path = os.path.join(directory, filename)
     return os.path.isfile(file_path)
 
 def csv_create(filename, header, path=None):
@@ -95,7 +95,7 @@ def csv_create(filename, header, path=None):
     
     file_path = os.path.join(directory, filename)
 
-    if csv_filecheck(filename, path):
+    if file_check(filename, path):
         print(f"[Info] CSV file already exists: {file_path}")
         return file_path
 
