@@ -74,6 +74,63 @@ Notes:
     - Indices that are out of range are ignored.
     - The order of remaining rows is preserved.
 
+## `data_columns_combine`
+
+Combine multiple 1D column vectors or 2D matrices into a single 2D array (column-wise).
+
+Parameters:
+    *args: Each argument can be:
+        - A 1D NumPy array or list (treated as a column)
+        - A 2D NumPy array or list of lists (multiple columns)
+        - None or empty arrays/lists are skipped
+    check_rows (bool): If True, all inputs must have the same number of rows (vertical elements)
+
+Returns:
+    np.ndarray: Combined 2D array of shape (n_rows, total_columns)
+
+Raises:
+    ValueError: If an input is a row vector or if row counts mismatch (when check_rows=True)
+
+## `data_bin`
+
+Bin rows of data based on continuous ranges or discrete values.
+
+Parameters:
+    data (np.ndarray): 2D array of shape (n_rows, n_cols).
+    mode (str): 'range' for numeric range binning, 'value' for discrete value binning.
+    dt (float, optional): Bin width for 'range' mode (required if mode='range').
+    bin_column (int, optional): Column index for 'value' mode (required if mode='value').
+    returnmode (str): 'indices' to return bin indices array, 'binned' to return list of arrays per bin.
+
+Returns:
+    If returnmode='indices':
+        bin_indices (np.ndarray): Array of shape (n_rows,) assigning each row to a bin index.
+                                  Rows outside bins get -1.
+        bin_labels (np.ndarray): 
+            - For 'range': 1D array of bin edges, length = number_of_bins + 1
+            - For 'value': 1D array of unique discrete values used as bins
+
+    If returnmode='binned':
+        binned_data (list of np.ndarray): List with one array per bin containing rows in that bin.
+        bin_labels (np.ndarray): same as above
+
+## `data_combine`
+
+Merge multiple datasets by time binning and trapezoidal averaging.
+
+Parameters:
+    *datasets: Each dataset is a 2D array-like of shape (n_rows, n_columns),
+               where column 0 is time (in seconds).
+    dt (float): Width of time bins.
+    mode (str): Averaging mode. Common options:
+        - 'arithmetic': Simple mean (Recommended if little data exists in the bins)
+        - 'trapezoidal': Integral-based average (default, produces nan's if little data exists in the bins)
+
+Returns:
+    np.ndarray: 2D array with shape (n_bins, 1 + sum of columns per dataset - 1),
+                where first column is the bin time (left edge),
+                and remaining columns are averaged values from all datasets.
+
 ### From `dimless_utils.py`
 
 
@@ -1746,6 +1803,25 @@ Returns:
     error_term : str
         The truncation error term in big-O notation, e.g., "O(h^2)".
 
+## `error_catastrophic_cancellation`
+
+Estimate the relative error in a subtraction due to catastrophic cancellation.
+
+Parameters:
+    x : float or np.ndarray
+        First approximate value(s).
+    y : float or np.ndarray
+        Second approximate value(s).
+    deltax : float or np.ndarray
+        Relative error(s) in x (i.e., delta_x / x).
+    deltay : float or np.ndarray
+        Relative error(s) in y (i.e., delta_y / y).
+
+Returns:
+    rel_error : float or np.ndarray
+        Estimated relative error in the computed difference (x - y) due to cancellation,
+        given by |x * deltax - y * deltay| / |x - y|.
+
 ### From `plot_utils.py`
 
 
@@ -1803,7 +1879,7 @@ Parameters:
 
 ## `mass_leakrate`
 
-Calculate mass leak rate (kg/s) from pressure change in an isochoric system with four modes.
+Calculate mass leak rate (kg/s) from pressure change in an isochoric system with five modes.
 
 Modes and formulas:
     Mode 1:  m_dot = M * V / (R * T) * dP/dt                                (based on molar mass, moles)
@@ -1812,9 +1888,11 @@ Modes and formulas:
     Mode 4:  m_dot = V / (Rspecific * T) * dP/dt                            (using specific gas constant)
     Mode 5:  m_dot = V * ( dRho/dt - dRho/dP|T dP/dt - dRho/dT|P dT/dt )    (Real gas)
 
+    Ensure that all the derivatives are evaluated at the corresponding timestep.
+
 Parameters:
     mode : str, optional
-        "Mode 1", "Mode 2", "Mode 3", or "Mode 4"
+        "Mode 1", "Mode 2", "Mode 3", "Mode4" or "Mode 5"
     M : float
         Molar mass (kg/mol)
     V : float
