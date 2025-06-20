@@ -100,3 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-20
 ### Changed
 - Addition of function dataset_splitheaderfromdata
+## Version 0.10.1 
+2025-06-20
+### Changed
+- bugfix dataset_combine.
