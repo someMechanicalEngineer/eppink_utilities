@@ -74,6 +74,22 @@ Notes:
     - Indices that are out of range are ignored.
     - The order of remaining rows is preserved.
 
+## `data_remove_columns`
+
+Remove or keep specified columns from CSV-like data (list of lists).
+
+Parameters:
+    contents (list of lists): CSV data, first row is header if inputmode='header'.
+    columns (list): List of column indices (int) or header names (str).
+    mode (str): 'remove' to drop listed columns, 'keep' to keep only listed columns.
+    inputmode (str): 'index' if columns are indices, 'header' if columns are header names.
+
+Returns:
+    list of lists: New contents with columns removed or kept accordingly.
+
+Raises:
+    ValueError: If invalid mode, inputmode, duplicates, or invalid column names/indices.
+
 ## `data_columns_combine`
 
 Combine multiple 1D column vectors or 2D matrices into a single 2D array (column-wise).
@@ -1478,14 +1494,14 @@ Example:
     }
     folder_create_structure('root_folder', structure)
 
-## `csv_filecheck`
+## `file_check`
 
-Check if a CSV file exists at a specified location.
+Check if a file exists at a specified location.
 
 Parameters:
-    filename (str): The name of the CSV file to check (e.g., 'data.csv').
+    filename (str): The name of the file to check (e.g., 'data.csv' or 'report.txt').
     path (str, optional): The directory path where the file should be located.
-        If None, the function defaults to the directory of the current script.
+        If None, defaults to the directory of the current script.
 
 Returns:
     bool: True if the file exists at the resolved location, False otherwise.
