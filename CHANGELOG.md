@@ -123,3 +123,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-21
 ### Changed
 - renaming value to range in data_remove_rows
+
+## Version 0.11.4 
+2025-06-21
+### Changed
+- data_remove_rows now supports selection of (n,) where n is the minimum and runs to the max.
