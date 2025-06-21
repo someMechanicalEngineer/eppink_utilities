@@ -128,3 +128,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-21
 ### Changed
 - data_remove_rows now supports selection of (n,) where n is the minimum and runs to the max.
+
+## Version 0.11.5 
+2025-06-21
+### Changed
+- Dugfix where data_remove row kept the first row using range selection
