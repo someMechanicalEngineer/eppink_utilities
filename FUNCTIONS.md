@@ -65,7 +65,7 @@ Remove or keep rows from contents based on indices or value range.
 
 Parameters:
     contents (list of lists): The CSV data as a list of rows (including header if present).
-    selector (list of int or tuple of (min, max)): Indices or range depending on selection_type.
+    selector (list of int or tuple of (min,) or (min, max)): Indices or value range depending on selection_type.
     mode (str): "remove" (default) or "keep".
     selection_type (str): "indices" (default) or "range".
     column (int): Column index to use when selection_type is "range".
@@ -75,7 +75,7 @@ Returns:
 
 Notes:
     - Invalid indices are ignored in "indices" mode.
-    - range comparisons use float conversion.
+    - Range comparisons use float conversion.
     - Header row (row 0) is preserved by default. Modify if needed.
 
 ## `data_remove_columns`
