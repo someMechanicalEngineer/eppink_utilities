@@ -114,3 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-21
 ### Changed
 - derivative_FDM changed to return all variables regularly instead of as a dict.
+
+## Version 0.11.2 
+2025-06-21
+### Changed
+- Updated data_remove_rows to match the functionality of data_remove_columns (i.e., range selection, keep/remove functionality)
