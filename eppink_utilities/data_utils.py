@@ -102,14 +102,14 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
     Notes:
         - Invalid indices are ignored in "indices" mode.
         - Range comparisons use float conversion.
-        - Header row (row 0) is preserved by default. Modify if needed.
+        - Header row (row 0) is preserved by default.
     """
     if selection_type == "indices":
         indices_set = set(selector)
         if mode == "remove":
-            return [row for i, row in enumerate(contents) if i not in indices_set]
+            return [row for i, row in enumerate(contents) if i == 0 or i not in indices_set]
         elif mode == "keep":
-            return [row for i, row in enumerate(contents) if i in indices_set]
+            return [row for i, row in enumerate(contents) if i == 0 or i in indices_set]
         else:
             raise ValueError("Mode must be 'remove' or 'keep'")
 
@@ -446,76 +446,28 @@ def dataset_SplitHeaderFromData(dataset):
         return first_row, dataset[1:]  # Header exists
 
 if __name__ == "__main__":
-    # Sample data: list of lists
-    data = [
-        ["ID", "Value", "Score"],
-        [1, 10, 55],
-        [2, 15, 65],
-        [3, 20, 75],
-        [4, 25, 85],
-        [5, 30, 95],
+    test_data = [
+        ['ID', 'Value', 'Score'],
+        [1, 1000, 50],
+        [2, 1500, 60],
+        [3, 1700, 70],
+        [4, 1800, 80],
+        [5, 1900, 90],
+        [6, 2100, 100]
     ]
 
-    print("Original data:")
-    for row in data:
-        print(row)
+    import pprint
+    pp = pprint.PrettyPrinter(indent=2)
 
-    # 1. Remove rows by indices
-    result = data_remove_rows(data, selector=[1, 3, 4], selection_type="indices", mode="remove")
-    print("\nAfter removing rows at indices 1 and 3:")
-    for row in result:
-        print(row)
+    print("Original Data:")
+    pp.pprint(test_data)
 
-    # 2. Keep only rows by indices
-    result = data_remove_rows(data, selector=[1, 3], selection_type="indices", mode="keep")
-    print("\nAfter keeping only rows at indices 1 and 3:")
-    for row in result:
-        print(row)
 
-    # 3. Remove rows where column 2 is in range 60 to 90
-    result = data_remove_rows(data, selector=(60, 90), selection_type="value", column=2, mode="remove")
-    print("\nAfter removing rows where column 2 is in range 60 to 90:")
-    for row in result:
-        print(row)
 
-    # 4. Keep only rows where column 2 is in range 60 to 90
-    result = data_remove_rows(data, selector=(60, 90), selection_type="value", column=2, mode="keep")
-    print("\nAfter keeping only rows where column 2 is in range 60 to 90:")
-    for row in result:
-        print(row)
+    # Test 3: Remove where column 1 is in range (1700, 2000)
+    print("\nRemove rows where column 1 is in range 1700 to max:")
+    pp.pprint(data_remove_rows(test_data, selector=(1700, ), selection_type="range", column=1, mode="remove"))
 
-    # 5. Remove rows where column 1 is in range 15 to 30
-    result = data_remove_rows(data, selector=(15, 30), selection_type="value", column=1, mode="remove")
-    print("\nAfter removing rows where column 1 is in range 15 to 30:")
-    for row in result:
-        print(row)
-
-    # 6. Keep only rows where column 1 is in range 10 to 20
-    result = data_remove_rows(data, selector=(10, 20), selection_type="value", column=1, mode="keep")
-    print("\nAfter keeping only rows where column 1 is in range 10 to 20:")
-    for row in result:
-        print(row)
-
-    # 7. Error test: missing column for value mode
-    try:
-        result = data_remove_rows(data, selector=(10, 20), selection_type="value", mode="keep")
-    except ValueError as e:
-        print(f"\nExpected error (missing column): {e}")
-
-    # 8. Error test: wrong selector format for value mode
-    try:
-        result = data_remove_rows(data, selector=[10, 20], selection_type="value", column=1, mode="keep")
-    except ValueError as e:
-        print(f"\nExpected error (wrong selector format): {e}")
-
-    # 9. Error test: invalid mode
-    try:
-        result = data_remove_rows(data, selector=[1, 2], selection_type="indices", mode="invalid")
-    except ValueError as e:
-        print(f"\nExpected error (invalid mode): {e}")
-
-    # 10. Error test: invalid selection_type
-    try:
-        result = data_remove_rows(data, selector=[1, 2], selection_type="unknown", mode="remove")
-    except ValueError as e:
-        print(f"\nExpected error (invalid selection_type): {e}")
+    # Test 4: Keep where column 1 is in range (1700, 2000)
+    print("\nKeep rows where column 1 is in range 1700 to max:")
+    pp.pprint(data_remove_rows(test_data, selector=(1700, ), selection_type="range", column=1, mode="keep"))
