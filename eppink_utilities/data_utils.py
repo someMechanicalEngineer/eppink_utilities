@@ -85,23 +85,59 @@ def data_rows_match(row1, row2, case_sensitive=False, type_sensitive=False):
                     return False
     return True
 
-def data_remove_rows(contents, indices):
+def data_remove_rows(contents, selector, mode="remove", selection_type="indices", column=None):
     """
-    Remove multiple rows from contents based on a list of indices.
+    Remove or keep rows from contents based on indices or value range.
 
     Parameters:
-        contents (list of lists): The CSV data as a list of rows.
-        indices (list or set of int): Indices of rows to remove.
+        contents (list of lists): The CSV data as a list of rows (including header if present).
+        selector (list of int or tuple of (min, max)): Indices or value range depending on selection_type.
+        mode (str): "remove" (default) or "keep".
+        selection_type (str): "indices" (default) or "value".
+        column (int): Column index to use when selection_type is "value".
 
     Returns:
-        list: New list with specified rows removed.
+        list: Modified list with rows removed or kept based on the given criteria.
 
     Notes:
-        - Indices that are out of range are ignored.
-        - The order of remaining rows is preserved.
+        - Invalid indices are ignored in "indices" mode.
+        - Value comparisons use float conversion.
+        - Header row (row 0) is preserved by default. Modify if needed.
     """
-    indices_set = set(indices)  # For faster lookup
-    return [row for i, row in enumerate(contents) if i not in indices_set]
+
+    if selection_type == "indices":
+        indices_set = set(selector)
+        if mode == "remove":
+            return [row for i, row in enumerate(contents) if i not in indices_set]
+        elif mode == "keep":
+            return [row for i, row in enumerate(contents) if i in indices_set]
+        else:
+            raise ValueError("Mode must be 'remove' or 'keep'")
+
+    elif selection_type == "value":
+        if column is None:
+            raise ValueError("Column index must be specified for value-based selection.")
+        if not isinstance(selector, tuple) or len(selector) != 2:
+            raise ValueError("Selector must be a (min, max) tuple for value-based selection.")
+
+        min_val, max_val = selector
+
+        def is_in_range(row):
+            try:
+                val = float(row[column])
+                return min_val <= val <= max_val
+            except (ValueError, IndexError):
+                return False  # Skip row if invalid or missing
+
+        if mode == "remove":
+            return [row for i, row in enumerate(contents) if not is_in_range(row)]
+        elif mode == "keep":
+            return [row for i, row in enumerate(contents) if is_in_range(row)]
+        else:
+            raise ValueError("Mode must be 'remove' or 'keep'")
+
+    else:
+        raise ValueError("Selection_type must be 'indices' or 'value'")
 
 def data_remove_columns(contents, columns, mode='remove', inputmode='index'):
     """
@@ -406,73 +442,77 @@ def dataset_SplitHeaderFromData(dataset):
     else:
         return first_row, dataset[1:]  # Header exists
 
-
 if __name__ == "__main__":
-    sample = [
-        ["Time", "Temp", "Pressure", "Humidity", "Wind"],
-        [0, 20.1, 1.01, 30, 5],
-        [1, 21.3, 1.02, 31, 6],
-        [2, 19.8, 1.00, 29, 7],
-        [3, 20.0, 1.03, 32, 4],
+    # Sample data: list of lists
+    data = [
+        ["ID", "Value", "Score"],
+        [1, 10, 55],
+        [2, 15, 65],
+        [3, 20, 75],
+        [4, 25, 85],
+        [5, 30, 95],
     ]
 
     print("Original data:")
-    for row in sample:
+    for row in data:
         print(row)
 
-    # Remove by index
-    print("\nRemove columns by index [2,4]:")
-    removed = data_remove_columns(sample, [2, 4], mode='remove', inputmode='index')
-    for row in removed:
+    # 1. Remove rows by indices
+    result = data_remove_rows(data, selector=[1, 3, 4], selection_type="indices", mode="remove")
+    print("\nAfter removing rows at indices 1 and 3:")
+    for row in result:
         print(row)
 
-    # Keep by index
-    print("\nKeep columns by index [0,1]:")
-    kept = data_remove_columns(sample, [0, 1], mode='keep', inputmode='index')
-    for row in kept:
+    # 2. Keep only rows by indices
+    result = data_remove_rows(data, selector=[1, 3], selection_type="indices", mode="keep")
+    print("\nAfter keeping only rows at indices 1 and 3:")
+    for row in result:
         print(row)
 
-    # Remove by header
-    print("\nRemove columns by header ['Pressure', 'Wind']:")
-    removed_h = data_remove_columns(sample, ['Pressure', 'Wind'], mode='remove', inputmode='header')
-    for row in removed_h:
+    # 3. Remove rows where column 2 is in range 60 to 90
+    result = data_remove_rows(data, selector=(60, 90), selection_type="value", column=2, mode="remove")
+    print("\nAfter removing rows where column 2 is in range 60 to 90:")
+    for row in result:
         print(row)
 
-    # Keep by header
-    print("\nKeep columns by header ['Time', 'Humidity']:")
-    kept_h = data_remove_columns(sample, ['Time', 'Humidity'], mode='keep', inputmode='header')
-    for row in kept_h:
+    # 4. Keep only rows where column 2 is in range 60 to 90
+    result = data_remove_rows(data, selector=(60, 90), selection_type="value", column=2, mode="keep")
+    print("\nAfter keeping only rows where column 2 is in range 60 to 90:")
+    for row in result:
         print(row)
 
-    # Edge case: empty columns list (should return full dataset)
-    print("\nEmpty columns list (mode='remove'):")
-    no_change = data_remove_columns(sample, [], mode='remove', inputmode='index')
-    for row in no_change:
+    # 5. Remove rows where column 1 is in range 15 to 30
+    result = data_remove_rows(data, selector=(15, 30), selection_type="value", column=1, mode="remove")
+    print("\nAfter removing rows where column 1 is in range 15 to 30:")
+    for row in result:
         print(row)
 
-    # Edge case: duplicate columns input
+    # 6. Keep only rows where column 1 is in range 10 to 20
+    result = data_remove_rows(data, selector=(10, 20), selection_type="value", column=1, mode="keep")
+    print("\nAfter keeping only rows where column 1 is in range 10 to 20:")
+    for row in result:
+        print(row)
+
+    # 7. Error test: missing column for value mode
     try:
-        print("\nDuplicate column indices:")
-        data_remove_columns(sample, [1, 1], mode='remove', inputmode='index')
+        result = data_remove_rows(data, selector=(10, 20), selection_type="value", mode="keep")
     except ValueError as e:
-        print("Caught error:", e)
+        print(f"\nExpected error (missing column): {e}")
 
+    # 8. Error test: wrong selector format for value mode
     try:
-        print("\nDuplicate column headers:")
-        data_remove_columns(sample, ['Temp', 'Temp'], mode='remove', inputmode='header')
+        result = data_remove_rows(data, selector=[10, 20], selection_type="value", column=1, mode="keep")
     except ValueError as e:
-        print("Caught error:", e)
+        print(f"\nExpected error (wrong selector format): {e}")
 
-    # Edge case: invalid column name
+    # 9. Error test: invalid mode
     try:
-        print("\nInvalid column header:")
-        data_remove_columns(sample, ['Nonexistent'], mode='remove', inputmode='header')
+        result = data_remove_rows(data, selector=[1, 2], selection_type="indices", mode="invalid")
     except ValueError as e:
-        print("Caught error:", e)
+        print(f"\nExpected error (invalid mode): {e}")
 
-    # Edge case: invalid column index
+    # 10. Error test: invalid selection_type
     try:
-        print("\nInvalid column index:")
-        data_remove_columns(sample, [10], mode='remove', inputmode='index')
+        result = data_remove_rows(data, selector=[1, 2], selection_type="unknown", mode="remove")
     except ValueError as e:
-        print("Caught error:", e)
+        print(f"\nExpected error (invalid selection_type): {e}")

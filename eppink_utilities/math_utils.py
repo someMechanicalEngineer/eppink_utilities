@@ -182,6 +182,8 @@ def derivative_FDM(y, x, derivative, accuracy):
             Possibly trimmed x corresponding to dy_dx.
         error_term : str
             The truncation error term in big-O notation, e.g., "O(h^2)".
+        error_estimation : np.ndarray
+            
     """
 
     CD_COEFFS = {
