@@ -85,7 +85,7 @@ def data_rows_match(row1, row2, case_sensitive=False, type_sensitive=False):
                     return False
     return True
 
-def data_remove_rows(contents, selector, mode="remove", selection_type="indices", column=None):
+def data_remove_rows(contents, selector, mode="remove", selection_type="indices", column=None, header=True):
     """
     Remove or keep rows from contents based on indices or value range.
 
@@ -95,6 +95,7 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
         mode (str): "remove" (default) or "keep".
         selection_type (str): "indices" (default) or "range".
         column (int): Column index to use when selection_type is "range".
+        header (bool): Whether the first row is a header row to preserve (default True).
 
     Returns:
         list: Modified list with rows removed or kept based on the given criteria.
@@ -102,14 +103,14 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
     Notes:
         - Invalid indices are ignored in "indices" mode.
         - Range comparisons use float conversion.
-        - Header row (row 0) is preserved by default.
+        - Header row (row 0) is preserved by default if header=True.
     """
     if selection_type == "indices":
         indices_set = set(selector)
         if mode == "remove":
-            return [row for i, row in enumerate(contents) if i == 0 or i not in indices_set]
+            return [row for i, row in enumerate(contents) if (header and i == 0) or i not in indices_set]
         elif mode == "keep":
-            return [row for i, row in enumerate(contents) if i == 0 or i in indices_set]
+            return [row for i, row in enumerate(contents) if (header and i == 0) or i in indices_set]
         else:
             raise ValueError("Mode must be 'remove' or 'keep'")
 
@@ -133,14 +134,15 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
                 return False  # Skip invalid/missing values
 
         if mode == "remove":
-            return [row for i, row in enumerate(contents) if i == 0 or not is_in_range(row)]
+            return [row for i, row in enumerate(contents) if (header and i == 0) or not is_in_range(row)]
         elif mode == "keep":
-            return [row for i, row in enumerate(contents) if i == 0 or is_in_range(row)]
+            return [row for i, row in enumerate(contents) if (header and i == 0) or is_in_range(row)]
         else:
             raise ValueError("Mode must be 'remove' or 'keep'")
 
     else:
         raise ValueError("Selection_type must be 'indices' or 'range'")
+
 
 def data_remove_columns(contents, columns, mode='remove', inputmode='index'):
     """
@@ -446,28 +448,52 @@ def dataset_SplitHeaderFromData(dataset):
         return first_row, dataset[1:]  # Header exists
 
 if __name__ == "__main__":
-    test_data = [
+    data = [
         ['ID', 'Value', 'Score'],
-        [1, 1000, 50],
-        [2, 1500, 60],
-        [3, 1700, 70],
-        [4, 1800, 80],
-        [5, 1900, 90],
-        [6, 2100, 100]
+        ['1', '1000', '50'],
+        ['2', '1500', '60'],
+        ['3', '1700', '70'],
+        ['4', '1800', '80'],
+        ['5', '1900', '90'],
+        ['6', '2100', '100'],
     ]
 
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
+    print("Original data:")
+    for row in data:
+        print(row)
+    print()
 
-    print("Original Data:")
-    pp.pprint(test_data)
+    # Test indices mode - remove
+    removed_indices = data_remove_rows(data, selector=[1, 3, 4], mode="remove", selection_type="indices")
+    print("After removing rows at indices 1, 3, 4:")
+    for row in removed_indices:
+        print(row)
+    print()
 
+    # Test indices mode - keep
+    kept_indices = data_remove_rows(data, selector=[2, 4], mode="keep", selection_type="indices")
+    print("After keeping only rows at indices 2, 4:")
+    for row in kept_indices:
+        print(row)
+    print()
 
+    # Test range mode - remove with (min, max)
+    removed_range = data_remove_rows(data, selector=(1700, 2000), mode="remove", selection_type="range", column=1)
+    print("After removing rows where column 1 is in range 1700 to 2000:")
+    for row in removed_range:
+        print(row)
+    print()
 
-    # Test 3: Remove where column 1 is in range (1700, 2000)
-    print("\nRemove rows where column 1 is in range 1700 to max:")
-    pp.pprint(data_remove_rows(test_data, selector=(1700, ), selection_type="range", column=1, mode="remove"))
+    # Test range mode - keep with (min, max)
+    kept_range = data_remove_rows(data, selector=(1700, 2000), mode="keep", selection_type="range", column=1)
+    print("After keeping rows where column 1 is in range 1700 to 2000:")
+    for row in kept_range:
+        print(row)
+    print()
 
-    # Test 4: Keep where column 1 is in range (1700, 2000)
-    print("\nKeep rows where column 1 is in range 1700 to max:")
-    pp.pprint(data_remove_rows(test_data, selector=(1700, ), selection_type="range", column=1, mode="keep"))
+    # Test range mode - keep with open-ended range (min,)
+    kept_open_ended = data_remove_rows(data, selector=(3,), mode="keep", selection_type="range", column=0)
+    print("After keeping rows where column 0 >= 3:")
+    for row in kept_open_ended:
+        print(row)
+    print()
