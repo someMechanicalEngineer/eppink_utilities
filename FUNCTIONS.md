@@ -69,6 +69,7 @@ Parameters:
     mode (str): "remove" (default) or "keep".
     selection_type (str): "indices" (default) or "range".
     column (int): Column index to use when selection_type is "range".
+    header (bool): Whether the first row is a header row to preserve (default True).
 
 Returns:
     list: Modified list with rows removed or kept based on the given criteria.
@@ -76,7 +77,7 @@ Returns:
 Notes:
     - Invalid indices are ignored in "indices" mode.
     - Range comparisons use float conversion.
-    - Header row (row 0) is preserved by default.
+    - Header row (row 0) is preserved by default if header=True.
 
 ## `data_remove_columns`
 
