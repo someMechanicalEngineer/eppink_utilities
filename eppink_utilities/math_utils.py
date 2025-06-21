@@ -403,11 +403,7 @@ def derivative_FDM(y, x, derivative, accuracy):
 
     # === 5. Return values ===
     error_term = f"O(h^{accuracy})"
-    return {
-    "derivative": dy_dx,
-    "x": x,
-    "error_term": error_term,
-    "error_estimation": error_est}
+    return dy_dx, x, error_term, error_est
 
 def error_catastrophic_cancellation(x, y, deltax, deltay):
     """

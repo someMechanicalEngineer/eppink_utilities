@@ -2,3 +2,5 @@
 - More functions..
 - Create testbranch
 - why does qrcode not install?
+- Remove the coolprop? Probably in thermo testblock
+- If there's an update available, prompt the user to update
