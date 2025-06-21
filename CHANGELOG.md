@@ -133,3 +133,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-21
 ### Changed
 - Dugfix where data_remove row kept the first row using range selection
+
+## Version 0.11.6 
+2025-06-21
+### Changed
+- data_remove_row now also works for datasets with header or without
