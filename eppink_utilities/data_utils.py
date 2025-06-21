@@ -91,7 +91,7 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
 
     Parameters:
         contents (list of lists): The CSV data as a list of rows (including header if present).
-        selector (list of int or tuple of (min, max)): Indices or range depending on selection_type.
+        selector (list of int or tuple of (min,) or (min, max)): Indices or value range depending on selection_type.
         mode (str): "remove" (default) or "keep".
         selection_type (str): "indices" (default) or "range".
         column (int): Column index to use when selection_type is "range".
@@ -101,10 +101,9 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
 
     Notes:
         - Invalid indices are ignored in "indices" mode.
-        - range comparisons use float conversion.
+        - Range comparisons use float conversion.
         - Header row (row 0) is preserved by default. Modify if needed.
     """
-
     if selection_type == "indices":
         indices_set = set(selector)
         if mode == "remove":
@@ -117,27 +116,31 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
     elif selection_type == "range":
         if column is None:
             raise ValueError("Column index must be specified for range-based selection.")
-        if not isinstance(selector, tuple) or len(selector) != 2:
-            raise ValueError("Selector must be a (min, max) tuple for range-based selection.")
+        if not isinstance(selector, (tuple, list)) or len(selector) not in (1, 2):
+            raise ValueError("Selector must be a (min,) or (min, max) tuple for range-based selection.")
 
-        min_val, max_val = selector
+        # Normalize selector to (min, max)
+        if len(selector) == 1:
+            min_val, max_val = selector[0], float('inf')
+        else:
+            min_val, max_val = selector
 
         def is_in_range(row):
             try:
                 val = float(row[column])
                 return min_val <= val <= max_val
-            except (ValueError, IndexError):
-                return False  # Skip row if invalid or missing
+            except (ValueError, IndexError, TypeError):
+                return False  # Skip invalid/missing values
 
         if mode == "remove":
-            return [row for i, row in enumerate(contents) if not is_in_range(row)]
+            return [row for i, row in enumerate(contents) if i == 0 or not is_in_range(row)]
         elif mode == "keep":
-            return [row for i, row in enumerate(contents) if is_in_range(row)]
+            return [row for i, row in enumerate(contents) if i == 0 or is_in_range(row)]
         else:
             raise ValueError("Mode must be 'remove' or 'keep'")
 
     else:
-        raise ValueError("Selection_type must be 'indices' or 'value'")
+        raise ValueError("Selection_type must be 'indices' or 'range'")
 
 def data_remove_columns(contents, columns, mode='remove', inputmode='index'):
     """
