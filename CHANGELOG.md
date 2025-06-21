@@ -109,3 +109,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-21
 ### Changed
 - changed csv_filecheck into a more general file_check and added data_remove_columns
+
+## Version 0.11.1 
+2025-06-21
+### Changed
+- derivative_FDM changed to return all variables regularly instead of as a dict.
