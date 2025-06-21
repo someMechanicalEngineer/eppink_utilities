@@ -76,7 +76,7 @@ Returns:
 Notes:
     - Invalid indices are ignored in "indices" mode.
     - Range comparisons use float conversion.
-    - Header row (row 0) is preserved by default. Modify if needed.
+    - Header row (row 0) is preserved by default.
 
 ## `data_remove_columns`
 
