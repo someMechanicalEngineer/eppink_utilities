@@ -61,18 +61,22 @@ Returns:
 
 ## `data_remove_rows`
 
-Remove multiple rows from contents based on a list of indices.
+Remove or keep rows from contents based on indices or value range.
 
 Parameters:
-    contents (list of lists): The CSV data as a list of rows.
-    indices (list or set of int): Indices of rows to remove.
+    contents (list of lists): The CSV data as a list of rows (including header if present).
+    selector (list of int or tuple of (min, max)): Indices or value range depending on selection_type.
+    mode (str): "remove" (default) or "keep".
+    selection_type (str): "indices" (default) or "value".
+    column (int): Column index to use when selection_type is "value".
 
 Returns:
-    list: New list with specified rows removed.
+    list: Modified list with rows removed or kept based on the given criteria.
 
 Notes:
-    - Indices that are out of range are ignored.
-    - The order of remaining rows is preserved.
+    - Invalid indices are ignored in "indices" mode.
+    - Value comparisons use float conversion.
+    - Header row (row 0) is preserved by default. Modify if needed.
 
 ## `data_remove_columns`
 
@@ -1826,6 +1830,7 @@ Returns:
         Possibly trimmed x corresponding to dy_dx.
     error_term : str
         The truncation error term in big-O notation, e.g., "O(h^2)".
+    error_estimation : np.ndarray
 
 ## `error_catastrophic_cancellation`
 
