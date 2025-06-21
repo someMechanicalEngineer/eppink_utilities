@@ -91,17 +91,17 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
 
     Parameters:
         contents (list of lists): The CSV data as a list of rows (including header if present).
-        selector (list of int or tuple of (min, max)): Indices or value range depending on selection_type.
+        selector (list of int or tuple of (min, max)): Indices or range depending on selection_type.
         mode (str): "remove" (default) or "keep".
-        selection_type (str): "indices" (default) or "value".
-        column (int): Column index to use when selection_type is "value".
+        selection_type (str): "indices" (default) or "range".
+        column (int): Column index to use when selection_type is "range".
 
     Returns:
         list: Modified list with rows removed or kept based on the given criteria.
 
     Notes:
         - Invalid indices are ignored in "indices" mode.
-        - Value comparisons use float conversion.
+        - range comparisons use float conversion.
         - Header row (row 0) is preserved by default. Modify if needed.
     """
 
@@ -114,11 +114,11 @@ def data_remove_rows(contents, selector, mode="remove", selection_type="indices"
         else:
             raise ValueError("Mode must be 'remove' or 'keep'")
 
-    elif selection_type == "value":
+    elif selection_type == "range":
         if column is None:
-            raise ValueError("Column index must be specified for value-based selection.")
+            raise ValueError("Column index must be specified for range-based selection.")
         if not isinstance(selector, tuple) or len(selector) != 2:
-            raise ValueError("Selector must be a (min, max) tuple for value-based selection.")
+            raise ValueError("Selector must be a (min, max) tuple for range-based selection.")
 
         min_val, max_val = selector
 
