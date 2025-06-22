@@ -4,6 +4,9 @@ from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 import warnings
 from .math_utils import derivative_FDM
+from .math_utils import safe_divide
+from .general_utils import validate_inputs
+from .dimless_utils import grashof, prandtl, rayleigh
 
 def conduction_radial_steady_numerical(r, L, bc, k, gridpoints, solver="RK45", tol=1e-3):
     """
@@ -259,111 +262,315 @@ def conduction_radial_analytical(
     }
     return sol_guess
 
+def Nusselt_correlations_free(mode, *, Ra=None, Gr=None, Pr = None, d=None, L=None):
+    """
+    Computes the Nusselt number (Nu) using empirical correlations for natural convection
+    in several geometries, based on the selected mode.
+
+    Parameters:
+    ----------
+    mode : str
+        The correlation mode. Supported options are:
+        
+        - "Annulus_vertical_1": 
+            Empirical correlation for natural convection in vertical annuli.
+            Equation:
+                Nu = 0.761 * (Ra * d / L)^0.283
+            Valid for:
+                10 < (Ra * d / L) < 1e3
+            Source:
+                Kubair & Simha (Exact citation/details TBD).
+        
+        - "Annulus_vertical_2":
+            Alternative empirical correlation for vertical annuli.
+            Equation:
+                Nu = 0.398 * (Ra * d / L)^0.284
+            Valid for:
+                10 < (Ra * d / L) < 1e5
+            Source:
+                Kubair & Simha (Exact citation/details TBD).
+
+    Keyword Arguments:
+    ------------------
+    Ra : float
+        Rayleigh number (dimensionless), representing buoyancy-driven flow.
+    d : float
+        Gap between the inner and outer cylinders (in meters) d = r_o - r_i.
+    L : float
+        Characteristic length or height of the annular region (in meters).
+
+    Returns:
+    -------
+    Nu : float
+        Computed Nusselt number based on the selected mode and input parameters.
+
+    Raises:
+    ------
+    ValueError:
+        - If any of Ra, d, or L is not provided.
+        - If the provided mode is not supported.
+    
+    Warnings:
+    --------
+    Issues a warning if the computed Ra*d/L value is outside the valid range for
+    the selected correlation mode.
+
+    Notes:
+    -----
+    The Nusselt number quantifies convective heat transfer relative to conduction.
+    These correlations are based on experimental/numerical results and must be applied
+    only within their validity range for physically meaningful results.
+    """
+
+
+    if mode == "Annulus_vertical_1":
+        if Ra is None or d is None or L is None:
+            raise ValueError("Ra, d, and L must all be provided.")
+        Ra, d, L = validate_inputs(Ra, d, L, check_broadcast=True)
+        ratio = Ra * safe_divide(d, L)
+        if not (10 < ratio < 1e3):
+            warnings.warn("Ra*d/L is out of the valid range (10 < Ra*d/L < 1e3) for Annulus_vertical_1.")
+        Nu = 0.761 * (ratio) ** 0.283
+        return Nu
+
+    elif mode == "Annulus_vertical_2":
+        if Ra is None or d is None or L is None:
+            raise ValueError("Ra, d, and L must all be provided.")
+        Ra, d, L = validate_inputs(Ra, d, L, check_broadcast=True)
+        ratio = Ra * safe_divide(d, L)
+        if not (10 < ratio < 1e5):
+            warnings.warn("Ra*d/L is out of the valid range (10 < Ra*d/L < 1e5) for Annulus_vertical_2.")
+        Nu = 0.398 * (ratio) ** 0.284
+        return Nu
+
+    else:
+        raise ValueError(f"Unknown mode '{mode}'. Please choose a supported mode.")
+
+def convection_analytical(
+    T_a,
+    A,
+    d,
+    L,
+    T_eval,
+    beta,
+    mu,
+    rho,
+    cp,
+    k,
+    nusselt_func,
+    *,
+    mode="solve_T",
+    Q=None,
+    T_b=None,
+    g=9.81,
+    max_iter=50,
+    tol=1e-4,
+):
+    """
+    Solves for T_b or Q in a free convection heat transfer problem.
+
+    Parameters
+    ----------
+    T_a : float or np.ndarray
+        Ambient temperature [K]
+    A : float
+        Surface area [m^2]
+    d : float
+        Characteristic length [m]
+    L : float
+        Vertical length [m]
+    T_eval : array-like
+        Temperature values corresponding to the property vectors
+    beta, mu, rho, cp, k : array-like
+        Thermophysical property vectors
+    nusselt_func : callable
+        Function to compute Nu, must accept Gr, Pr, Ra, d, L
+    mode : str
+        'solve_T' to compute T_b (requires Q),
+        'solve_Q' to compute Q (requires T_b)
+    Q : float or np.ndarray, optional
+        Heat transfer rate [W] (required for mode='solve_T')
+    T_b : float or np.ndarray, optional
+        Surface temperature [K] (required for mode='solve_Q')
+    g : float, optional
+        Gravitational acceleration [m/s^2] (default is 9.81)
+    max_iter : int, optional
+        Maximum number of iterations (only used in mode='solve_T')
+    tol : float, optional
+        Convergence tolerance (only used in mode='solve_T')
+
+    Returns
+    -------
+    dict with results including:
+    - T_b, T_avg, h, Nu, Q (if solved), Ra, Gr, Pr
+    """
+    
+    # Prepare interpolation functions
+    interp = lambda arr: interp1d(T_eval, arr, kind='linear', fill_value='extrapolate')
+    interp_beta = interp(beta)
+    interp_mu   = interp(mu)
+    interp_rho  = interp(rho)
+    interp_cp   = interp(cp)
+    interp_k    = interp(k)
+
+    if mode == "solve_T":
+        if Q is None:
+            raise ValueError("Q must be provided for mode='solve_T'")
+
+        # Initial guess
+        h = 10
+        T_b = T_a - Q / (h * A)
+
+        for _ in range(max_iter):
+            T_avg = 0.5 * (T_a + T_b)
+
+            # Interpolate properties
+            beta_i = interp_beta(T_avg)
+            mu_i   = interp_mu(T_avg)
+            rho_i  = interp_rho(T_avg)
+            cp_i   = interp_cp(T_avg)
+            k_i    = interp_k(T_avg)
+
+            nu = mu_i / rho_i
+            alpha = k_i / (rho_i * cp_i)
+            delta_T = np.abs(T_b - T_a)
+
+            Gr = grashof(g, d, nu, beta=beta_i, Ts=T_a, T_inf=T_b, mode="heat")
+            Pr = prandtl(cp_i, mu_i, k_i,)
+            Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
+
+            Nu = nusselt_func(Gr=Gr, Pr=Pr, Ra=Ra, d=d, L=L)
+            h_new = Nu * k_i / d
+            T_b_new = T_a - Q / (h_new * A)
+
+            if np.all(np.abs(T_b_new - T_b) < tol):
+                break
+
+            T_b = T_b_new
+            h = h_new
+        else:
+            warnings.warn("convection_analytical: Maximum iterations reached without convergence.")
+
+        T_avg = 0.5 * (T_a + T_b)
+        Q_solved = Q  # Preserve original input
+
+    elif mode == "solve_Q":
+        if T_b is None:
+            raise ValueError("T_b must be provided for mode='solve_Q'")
+
+        T_avg = 0.5 * (T_a + T_b)
+
+        # Interpolate properties
+        beta_i = interp_beta(T_avg)
+        mu_i   = interp_mu(T_avg)
+        rho_i  = interp_rho(T_avg)
+        cp_i   = interp_cp(T_avg)
+        k_i    = interp_k(T_avg)
+
+        nu = mu_i / rho_i
+        alpha = k_i / (rho_i * cp_i)
+        delta_T = np.abs(T_b - T_a)
+
+        Gr = grashof(g, d, nu, beta=beta_i, Ts=T_a, T_inf=T_b, mode="heat")
+        Pr = prandtl(cp_i, mu_i, k_i,)
+        Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
+
+        Nu = nusselt_func(Gr=Gr, Pr=Pr, Ra=Ra, d=d, L=L)
+        h = Nu * k_i / d
+        Q_solved = h * A * (T_a - T_b)
+
+    else:
+        raise ValueError(f"Unknown mode '{mode}'. Use 'solve_T' or 'solve_Q'.")
+ 
+    return (
+        Q_solved,  # Q
+        T_a,       # T_a
+        T_b,       # T_b
+        T_avg,     # T_avg
+        h,         # h
+        Nu,        # Nu
+        Ra,        # Ra
+        Gr,        # Gr
+        Pr         # Pr
+    )
+
+
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
     import numpy as np
+    from functools import partial
+    from eppink_utilities.heattransfer_utils import Nusselt_correlations_free
 
-    # Common parameters
-    Q = -17.11  # Negative for outward heat flow
-    L = 92 / 1000
-    gridpoints = 200
+    # Sample temperature range for property interpolation [K]
+    T_eval = np.linspace(300, 350, 5)
 
-    # --- Layer 1 ---
-    k1 = 0.2
-    r1 = (55 / 1000, 60 / 1000)
-    bc1 = [-130 + 273, None, Q]
+    # Sample property vectors corresponding to T_eval
+    beta = 1 / T_eval
+    mu = np.linspace(1.8e-5, 2.1e-5, len(T_eval))
+    rho = np.linspace(1.2, 1.1, len(T_eval))
+    cp = np.linspace(1000, 1020, len(T_eval))
+    k = np.linspace(0.026, 0.030, len(T_eval))
 
-    result1 = conduction_radial_steady_numerical(r1, L, bc1, k1, gridpoints)
-    r_vals1 = result1["r"]
-    T_vals1 = result1["T"]
+    # Geometric and input conditions
+    A = 0.2     # m²
+    d = 0.01    # m
+    L = 0.1     # m
+    T_a = 350   # K
+    Q = 20      # W
+    T_b = 328.53   # K
 
-    # --- Layer 2 ---
-    k2 = 0.025
-    r2 = (60 / 1000, 67 / 1000)
-    T_interface_12 = T_vals1[-1]
-    bc2 = [T_interface_12, None, Q]
+    # Bind the Nusselt function to a specific correlation
+    nusselt_func = partial(Nusselt_correlations_free, mode="Annulus_vertical_2")
 
-    result2 = conduction_radial_steady_numerical(r2, L, bc2, k2, gridpoints)
-    r_vals2 = result2["r"]
-    T_vals2 = result2["T"]
+    print("=== Mode: solve_T ===")
+    out_T = convection_analytical(
+        T_a=T_a,
+        Q=Q,
+        A=A,
+        d=d,
+        L=L,
+        T_eval=T_eval,
+        beta=beta,
+        mu=mu,
+        rho=rho,
+        cp=cp,
+        k=k,
+        nusselt_func=nusselt_func,
+        mode="solve_T"
+    )
 
-    # --- Layer 3 ---
-    k3 = 0.2
-    r3 = (67 / 1000, 70 / 1000)
-    T_interface_23 = T_vals2[-1]
-    bc3 = [T_interface_23, None, Q]
+    print(f"Q      = {out_T[0]:.2f} W")
+    print(f"T_a    = {out_T[1]:.2f} K")
+    print(f"T_b    = {out_T[2]:.2f} K")
+    print(f"T_avg  = {out_T[3]:.2f} K")
+    print(f"h      = {out_T[4]:.4f} W/m²K")
+    print(f"Nu     = {out_T[5]:.4f}")
+    print(f"Ra     = {out_T[6]:.2e}")
+    print(f"Gr     = {out_T[7]:.2e}")
+    print(f"Pr     = {out_T[8]:.4f}")
 
-    result3 = conduction_radial_steady_numerical(r3, L, bc3, k3, gridpoints)
-    r_vals3 = result3["r"]
-    T_vals3 = result3["T"]
+    print("\n=== Mode: solve_Q ===")
+    out_Q = convection_analytical(
+        T_a=T_a,
+        T_b=T_b,
+        A=A,
+        d=d,
+        L=L,
+        T_eval=T_eval,
+        beta=beta,
+        mu=mu,
+        rho=rho,
+        cp=cp,
+        k=k,
+        nusselt_func=nusselt_func,
+        mode="solve_Q"
+    )
 
-    # --- Combine results ---
-    r_total = np.concatenate([r_vals1, r_vals2, r_vals3])
-    T_total = np.concatenate([T_vals1, T_vals2, T_vals3])
-
-    # --- Plot temperature profile ---
-    plt.plot(r_total, T_total, label="T(r) across 3-layer wall")
-    plt.axvline(r1[1], color='gray', linestyle='--', linewidth=0.8, label='Interface 1–2')
-    plt.axvline(r2[1], color='gray', linestyle='--', linewidth=0.8, label='Interface 2–3')
-
-    # Mark and label boundary/interface temperatures
-    boundary_radii = [r1[0], r1[1], r2[1], r3[1]]
-    boundary_temps = [T_vals1[0], T_interface_12, T_interface_23, T_vals3[-1]]
-    labels = ["r = 55 mm", "r = 60 mm", "r = 67 mm", "r = 70 mm"]
-
-    plt.scatter(boundary_radii, boundary_temps, color='red', zorder=5)
-    for r_pt, T_pt, label in zip(boundary_radii, boundary_temps, labels):
-        plt.text(r_pt, T_pt + 2, f"{T_pt:.1f} K\n({label})", ha='center', va='bottom', fontsize=8, color='red')
-
-    plt.xlabel("Radius r (m)")
-    plt.ylabel("Temperature T (K)")
-    plt.title("Radial Temperature Profile in Triple-Layered Wall")
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
-if __name__ == "__main__": 
-    radii = [55/1000,60/1000,67/1000,70/1000]
-    T_bounds = (-130+273, 20+273.0)
-    L = 92/1000
-
-    k1 = 0.2
-    T_vals = np.linspace(300, 400, 5)
-    k_vals = 10 + 0.05 * (T_vals - 300)
-    k2 = np.column_stack((T_vals, k_vals))
-    k2 = 0.025
-    k3 = 0.2
-    k_data_list = [k1, k2, k3]
-    N_points = [300, 400, 300]
-
-    sol_guess = conduction_radial_analytical(radii, T_bounds, k_data_list, N_points, L=L)
-
-    r = sol_guess['r']
-    T = sol_guess['T']
-    q_dot = sol_guess['q_dot']
-    dT_dr = sol_guess['dT_dr']
-    Q_dot = sol_guess['Q_dot']
-
-    fig, ax1 = plt.subplots(figsize=(9, 5))
-
-    ax1.plot(r * 1000, T, 'tab:blue', label='Temperature (K)')
-    ax1.set_xlabel('Radius (mm)')
-    ax1.set_ylabel('Temperature (K)', color='tab:blue')
-    ax1.tick_params(axis='y', labelcolor='tab:blue')
-
-    for ri in radii:
-        ax1.axvline(ri * 1000, color='gray', linestyle=':', linewidth=1)
-        idx = (np.abs(r - ri)).argmin()
-        T_ri = T[idx]
-        ax1.text(ri * 1000, T_ri + 5, f"{T_ri:.1f} K", ha='center', va='bottom', fontsize=9)
-
-    ax2 = ax1.twinx()
-    ax2.plot(r * 1000, q_dot, 'tab:red', label='Heat Flux (W/m²)', linestyle='--')
-    ax2.set_ylabel('Heat Flux (W/m²)', color='tab:red')
-    ax2.tick_params(axis='y', labelcolor='tab:red')
-
-    plt.title(f"Radial Temperature & Heat Flux | Q = {Q_dot:.2f} W")
-    fig.tight_layout()
-    plt.grid(True)
-    plt.show()
+    print(f"Q      = {out_Q[0]:.2f} W")
+    print(f"T_a    = {out_Q[1]:.2f} K")
+    print(f"T_b    = {out_Q[2]:.2f} K")
+    print(f"T_avg  = {out_Q[3]:.2f} K")
+    print(f"h      = {out_Q[4]:.4f} W/m²K")
+    print(f"Nu     = {out_Q[5]:.4f}")
+    print(f"Ra     = {out_Q[6]:.2e}")
+    print(f"Gr     = {out_Q[7]:.2e}")
+    print(f"Pr     = {out_Q[8]:.4f}")

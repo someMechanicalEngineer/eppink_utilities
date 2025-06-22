@@ -2429,3 +2429,208 @@ def reynolds(u, L, *, mode="dynamic", nu=None, rho=None, mu=None):
         archimedes(g, L, rho, rho_l, mode="nonsense", mu=mu)
     except ValueError as e:
         print("Expected error (invalid mode):", e)
+
+def rayleigh(
+    *,
+    mode="general",
+    rho=None, beta=None, dT=None, l=None, g=None, eta=None, alpha=None,
+    Ts=None, T_inf=None, x=None, nu=None,
+    q_o=None, k=None,
+    d_rho=None, rho0=None, K=None, L=None, R=None,
+    H=None, D=None, Cp=None, dT_sa=None,
+    Gr=None, Pr=None
+):
+    """
+    Computes the Rayleigh number (Ra) in one of several physical contexts.
+
+    Modes:
+        - "general":
+            Ra = (rho * beta * dT * l^3 * g) / (eta * alpha)
+
+        - "vertical_wall":
+            Ra = (g * beta * (Ts - T_inf) * x^3) / (nu * alpha)
+
+        - "uniform_flux":
+            Ra = (g * beta * q_o * x^4) / (nu * alpha * k)
+
+        - "mushy_zone":
+            Ra = (d_rho / rho0) * g * K * L / (alpha * nu)
+
+        - "mushy_zone_alternate":
+            Ra = (d_rho / rho0) * g * K / (R * nu)
+
+        - "mantle_internal_heating":
+            Ra = (g * rho0^2 * beta * H * D^5) / (eta * alpha * k)
+
+        - "mantle_bottom_heating":
+            Ra = (rho0^2 * g * beta * dT_sa * D^3 * Cp) / (eta * k)
+
+        - "porous":
+            Ra = (rho * beta * dT * k * l * g) / (eta * alpha)
+
+        - "grpr":
+            Ra = Gr * Pr
+
+    Parameters:
+        mode : str, optional (default "general")
+            Mode to determine the formula used.
+        All other parameters are optional and specific to the selected mode.
+
+    Returns:
+        Ra : float or ndarray
+            Rayleigh number (dimensionless), with np.nan propagated.
+
+    Raises:
+        ValueError: if mode is invalid or required parameters are missing.
+    """
+    mode = mode.lower()
+    if mode not in (
+        "general", "vertical_wall", "uniform_flux",
+        "mushy_zone", "mushy_zone_alternate",
+        "mantle_internal_heating", "mantle_bottom_heating",
+        "porous", "grpr"
+    ):
+        raise ValueError("Invalid mode. Choose from: general, vertical_wall, uniform_flux, "
+                         "mushy_zone, mushy_zone_alternate, mantle_internal_heating, "
+                         "mantle_bottom_heating, porous, grpr.")
+
+    if mode == "general":
+        missing = [n for n, v in (("rho", rho), ("beta", beta), ("dT", dT),
+                                  ("l", l), ("g", g), ("eta", eta), ("alpha", alpha)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'general': {', '.join(missing)}")
+        rho, beta, dT, l, g, eta, alpha = validate_inputs(rho, beta, dT, l, g, eta, alpha)
+        return safe_divide(rho * beta * dT * l**3 * g, eta * alpha)
+
+    elif mode == "vertical_wall":
+        missing = [n for n, v in (("g", g), ("beta", beta), ("Ts", Ts),
+                                  ("T_inf", T_inf), ("x", x), ("nu", nu), ("alpha", alpha)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'vertical_wall': {', '.join(missing)}")
+        g, beta, Ts, T_inf, x, nu, alpha = validate_inputs(g, beta, Ts, T_inf, x, nu, alpha)
+        return safe_divide(g * beta * (Ts - T_inf) * x**3, nu * alpha)
+
+    elif mode == "uniform_flux":
+        missing = [n for n, v in (("g", g), ("beta", beta), ("q_o", q_o),
+                                  ("x", x), ("nu", nu), ("alpha", alpha), ("k", k)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'uniform_flux': {', '.join(missing)}")
+        g, beta, q_o, x, nu, alpha, k = validate_inputs(g, beta, q_o, x, nu, alpha, k)
+        return safe_divide(g * beta * q_o * x**4, nu * alpha * k)
+
+    elif mode == "mushy_zone":
+        missing = [n for n, v in (("d_rho", d_rho), ("rho0", rho0), ("g", g),
+                                  ("K", K), ("L", L), ("alpha", alpha), ("nu", nu)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'mushy_zone': {', '.join(missing)}")
+        d_rho, rho0, g, K, L, alpha, nu = validate_inputs(d_rho, rho0, g, K, L, alpha, nu)
+        return safe_divide(safe_divide(d_rho, rho0) * g * K * L, alpha * nu)
+
+    elif mode == "mushy_zone_alternate":
+        missing = [n for n, v in (("d_rho", d_rho), ("rho0", rho0), ("g", g),
+                                  ("K", K), ("R", R), ("nu", nu)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'mushy_zone_alternate': {', '.join(missing)}")
+        d_rho, rho0, g, K, R, nu = validate_inputs(d_rho, rho0, g, K, R, nu)
+        return safe_divide(safe_divide(d_rho, rho0) * g * K, R * nu)
+
+    elif mode == "mantle_internal_heating":
+        missing = [n for n, v in (("g", g), ("rho0", rho0), ("beta", beta),
+                                  ("H", H), ("D", D), ("eta", eta), ("alpha", alpha), ("k", k)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'mantle_internal_heating': {', '.join(missing)}")
+        g, rho0, beta, H, D, eta, alpha, k = validate_inputs(g, rho0, beta, H, D, eta, alpha, k)
+        return safe_divide(g * rho0**2 * beta * H * D**5, eta * alpha * k)
+
+    elif mode == "mantle_bottom_heating":
+        missing = [n for n, v in (("rho0", rho0), ("g", g), ("beta", beta), ("dT_sa", dT_sa),
+                                  ("D", D), ("Cp", Cp), ("eta", eta), ("k", k)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'mantle_bottom_heating': {', '.join(missing)}")
+        rho0, g, beta, dT_sa, D, Cp, eta, k = validate_inputs(rho0, g, beta, dT_sa, D, Cp, eta, k)
+        return safe_divide(rho0**2 * g * beta * dT_sa * D**3 * Cp, eta * k)
+
+    elif mode == "porous":
+        missing = [n for n, v in (("rho", rho), ("beta", beta), ("dT", dT),
+                                  ("k", k), ("l", l), ("g", g), ("eta", eta), ("alpha", alpha)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'porous': {', '.join(missing)}")
+        rho, beta, dT, k, l, g, eta, alpha = validate_inputs(rho, beta, dT, k, l, g, eta, alpha)
+        return safe_divide(rho * beta * dT * k * l * g, eta * alpha)
+
+    elif mode == "grpr":
+        missing = [n for n, v in (("Gr", Gr), ("Pr", Pr)) if v is None]
+        if missing:
+            raise ValueError(f"Missing required parameter(s) for mode 'grpr': {', '.join(missing)}")
+        Gr, Pr = validate_inputs(Gr, Pr)
+        return Gr * Pr
+
+
+if __name__ == "__main__":
+    import numpy as np
+
+    def print_test_result(mode, kwargs):
+        try:
+            result = rayleigh(mode=mode, **kwargs)
+            print(f"Mode '{mode}' with inputs {kwargs} => Rayleigh number:\n{result}\n")
+        except Exception as e:
+            print(f"Mode '{mode}' with inputs {kwargs} raised an error:\n{e}\n")
+
+    # Scalar values
+    scalar_vals = {
+        "rho": 1000, "beta": 0.0002, "dT": 10, "l": 0.1, "g": 9.81,
+        "eta": 0.001, "alpha": 1.4e-7, "Ts": 310, "T_inf": 300, "x": 0.5,
+        "nu": 1.0e-6, "q_o": 500, "k": 0.6, "d_rho": 50, "rho0": 1000,
+        "K": 1e-12, "L": 0.05, "R": 1e-5, "H": 5e-8, "D": 2.9e6,
+        "Cp": 1250, "dT_sa": 300, "Gr": 1e5, "Pr": 7
+    }
+
+    # Vector values
+    vector_vals = {k: np.array([v, v * 2, np.nan]) for k, v in scalar_vals.items()}
+
+    # Modes to test
+    modes = [
+        "general", "vertical_wall", "uniform_flux",
+        "mushy_zone", "mushy_zone_alternate",
+        "mantle_internal_heating", "mantle_bottom_heating",
+        "porous", "grpr"
+    ]
+
+    # Testing scalar inputs
+    print("=== Testing scalar inputs ===\n")
+    for mode in modes:
+        # Build kwargs for required parameters dynamically
+        required_params = {
+            "general": ["rho", "beta", "dT", "l", "g", "eta", "alpha"],
+            "vertical_wall": ["g", "beta", "Ts", "T_inf", "x", "nu", "alpha"],
+            "uniform_flux": ["g", "beta", "q_o", "x", "nu", "alpha", "k"],
+            "mushy_zone": ["d_rho", "rho0", "g", "K", "L", "alpha", "nu"],
+            "mushy_zone_alternate": ["d_rho", "rho0", "g", "K", "R", "nu"],
+            "mantle_internal_heating": ["g", "rho0", "beta", "H", "D", "eta", "alpha", "k"],
+            "mantle_bottom_heating": ["rho0", "g", "beta", "dT_sa", "D", "Cp", "eta", "k"],
+            "porous": ["rho", "beta", "dT", "k", "l", "g", "eta", "alpha"],
+            "grpr": ["Gr", "Pr"]
+        }
+        kwargs = {param: scalar_vals[param] for param in required_params[mode]}
+        print_test_result(mode, kwargs)
+
+    # Testing vector inputs
+    print("=== Testing vector inputs ===\n")
+    for mode in modes:
+        kwargs = {param: vector_vals[param] for param in required_params[mode]}
+        print_test_result(mode, kwargs)
+
+    # Testing mixed inputs with np.nan introduced manually
+    print("=== Testing mixed scalar and vector inputs with np.nan ===\n")
+    for mode in modes:
+        kwargs = {}
+        for param in required_params[mode]:
+            # Alternate scalar and vector for parameters, insert np.nan for some scalar
+            if param in ("rho", "beta", "Gr"):  # example params to be scalar with nan
+                val = scalar_vals[param]
+                if param == "rho":
+                    val = np.nan
+                kwargs[param] = val
+            else:
+                kwargs[param] = vector_vals[param]
+        print_test_result(mode, kwargs)

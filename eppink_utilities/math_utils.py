@@ -182,7 +182,7 @@ def derivative_FDM(y, x, derivative, accuracy):
             Possibly trimmed x corresponding to dy_dx.
         error_term : str
             The truncation error term in big-O notation, e.g., "O(h^2)".
-        error_estimation : np.ndarray
+        error_estimation : n
             
     """
 
@@ -226,32 +226,6 @@ def derivative_FDM(y, x, derivative, accuracy):
     (4, 4): [28/3, -111/2, 142, -1219/6, 176, -185/2, 82/3, -7/2],
 }
     
-    BD_COEFFS = {
-    (1, 1): [1, -1],
-    (1, 2): [1/2, -2, 3/2],
-    (1, 3): [-1/3, 3/2, -3, 11/6],
-    (1, 4): [1/4, -4/3, 3, -4, 25/12],
-    (1, 5): [-1/5, 5/4, -10/3, 5, -5, 137/60],
-    (1, 6): [1/6, -6/5, 15/4, -20/3, 15/2, -6, 49/20],
-
-    (2, 1): [1, -2, 1],
-    (2, 2): [-1, 4, -5, 2],
-    (2, 3): [11/12, -14/3, 19/2, -26/3, 35/12],
-    (2, 4): [-5/6, 61/12, -13, 107/6, -77/6, 15/4],
-    (2, 5): [137/180, -27/5, 33/2, -254/9, 117/4, -87/5, 203/45],
-    (2, 6): [-7/10, 1019/180, -201/10, 41, -949/18, 879/20, -223/10, 469/90],
-
-    (3, 1): [-1, 3, -3, 1],
-    (3, 2): [3/2, -7, 12, -9, 5/2],
-    (3, 3): [-7/4, 41/4, -49/2, 59/2, -71/4, 17/4],
-    (3, 4): [15/8, -13, 307/8, -62, 461/8, -29, 49/8],
-
-    (4, 1): [1, -4, 6, -4, 1],
-    (4, 2): [-2, 11, -24, 26, -14, 3],
-    (4, 3): [17/6, -19, 107/2, -242/3, 137/2, -31, 35/6],
-    (4, 4): [-7/2, 82/3, -185/2, 176, -1219/6, 142, -111/2, 28/3],
-}
-
     def CD(y, x, derivative=1, accuracy=4):
         """
         Central finite difference derivative calculation.
@@ -434,10 +408,53 @@ def error_catastrophic_cancellation(x, y, deltax, deltay):
 
 
 if __name__ == "__main__":
-    x = np.linspace(1, 10, 10)
-    y1 = derivative_FDM(x ** 2, x, 1, 4)
-    y2 = derivative_FDM(x ** 3, x, 1, 4)
+    import numpy as np
+    import matplotlib.pyplot as plt
 
+    # Define test function and its true derivative
+    def f(x):
+        return np.sin(x)
 
-    result1 = error_catastrophic_cancellation(y1["derivative"], y2["derivative"], y1["error_estimation"], y2["error_estimation"])
-    print("Case 1 - Scalars for deltas:\n", result1)
+    def df_exact(x):
+        return np.cos(x)
+
+    # Grid settings
+    x = np.linspace(0, 2 * np.pi, 100)
+    y = f(x)
+
+    # Choose derivative and accuracy
+    derivative = 1
+    accuracy = 4
+
+    # Compute finite difference derivative
+    dy_dx, x_used, error_term, error_estimation = derivative_FDM(y, x, derivative, accuracy)
+
+    # Exact derivative
+    dy_dx_exact = df_exact(x)
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.plot(x, dy_dx_exact, label="Exact derivative", linewidth=2)
+    plt.plot(x_used, dy_dx, label=f"FD derivative ({error_term})", linestyle="--")
+    plt.title("Comparison of Exact and Finite Difference Derivative")
+    plt.xlabel("x")
+    plt.ylabel("dy/dx")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # Plot error
+    plt.figure(figsize=(10, 4))
+    plt.plot(x, dy_dx - dy_dx_exact, label="Error", color="red")
+    plt.title("Derivative Error (FD - Exact)")
+    plt.xlabel("x")
+    plt.ylabel("Error")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # Print numerical error at boundaries
+    print("Boundary errors:")
+    print("Start (first 5):", dy_dx[:5] - dy_dx_exact[:5])
+    print("End (last 5):", dy_dx[-5:] - dy_dx_exact[-5:])
