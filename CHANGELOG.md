@@ -138,3 +138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-21
 ### Changed
 - data_remove_row now also works for datasets with header or without
+## Version 0.12.0 
+2025-06-22
+### Changed
+- new heattransfer_utils.convection_analytical, heattransfer_utils.Nusselt_correlations_free and dimless_utils.rayleigh
