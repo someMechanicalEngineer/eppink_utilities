@@ -1456,6 +1456,50 @@ Returns:
 Raises:
     ValueError: if required parameters are missing or mode is invalid
 
+## `rayleigh`
+
+Computes the Rayleigh number (Ra) in one of several physical contexts.
+
+Modes:
+    - "general":
+        Ra = (rho * beta * dT * l^3 * g) / (eta * alpha)
+
+    - "vertical_wall":
+        Ra = (g * beta * (Ts - T_inf) * x^3) / (nu * alpha)
+
+    - "uniform_flux":
+        Ra = (g * beta * q_o * x^4) / (nu * alpha * k)
+
+    - "mushy_zone":
+        Ra = (d_rho / rho0) * g * K * L / (alpha * nu)
+
+    - "mushy_zone_alternate":
+        Ra = (d_rho / rho0) * g * K / (R * nu)
+
+    - "mantle_internal_heating":
+        Ra = (g * rho0^2 * beta * H * D^5) / (eta * alpha * k)
+
+    - "mantle_bottom_heating":
+        Ra = (rho0^2 * g * beta * dT_sa * D^3 * Cp) / (eta * k)
+
+    - "porous":
+        Ra = (rho * beta * dT * k * l * g) / (eta * alpha)
+
+    - "grpr":
+        Ra = Gr * Pr
+
+Parameters:
+    mode : str, optional (default "general")
+        Mode to determine the formula used.
+    All other parameters are optional and specific to the selected mode.
+
+Returns:
+    Ra : float or ndarray
+        Rayleigh number (dimensionless), with np.nan propagated.
+
+Raises:
+    ValueError: if mode is invalid or required parameters are missing.
+
 ### From `file_utils.py`
 
 
@@ -1763,6 +1807,104 @@ Returns
 sol_guess : dict
     Dictionary with 'r', 'T', 'Q_dot', 'q_dot', and 'dT_dr'
 
+## `Nusselt_correlations_free`
+
+Computes the Nusselt number (Nu) using empirical correlations for natural convection
+in several geometries, based on the selected mode.
+
+Parameters:
+----------
+mode : str
+    The correlation mode. Supported options are:
+    
+    - "Annulus_vertical_1": 
+        Empirical correlation for natural convection in vertical annuli.
+        Equation:
+            Nu = 0.761 * (Ra * d / L)^0.283
+        Valid for:
+            10 < (Ra * d / L) < 1e3
+        Source:
+            Kubair & Simha (Exact citation/details TBD).
+    
+    - "Annulus_vertical_2":
+        Alternative empirical correlation for vertical annuli.
+        Equation:
+            Nu = 0.398 * (Ra * d / L)^0.284
+        Valid for:
+            10 < (Ra * d / L) < 1e5
+        Source:
+            Kubair & Simha (Exact citation/details TBD).
+
+Keyword Arguments:
+------------------
+Ra : float
+    Rayleigh number (dimensionless), representing buoyancy-driven flow.
+d : float
+    Gap between the inner and outer cylinders (in meters) d = r_o - r_i.
+L : float
+    Characteristic length or height of the annular region (in meters).
+
+Returns:
+-------
+Nu : float
+    Computed Nusselt number based on the selected mode and input parameters.
+
+Raises:
+------
+ValueError:
+    - If any of Ra, d, or L is not provided.
+    - If the provided mode is not supported.
+
+Warnings:
+--------
+Issues a warning if the computed Ra*d/L value is outside the valid range for
+the selected correlation mode.
+
+Notes:
+-----
+The Nusselt number quantifies convective heat transfer relative to conduction.
+These correlations are based on experimental/numerical results and must be applied
+only within their validity range for physically meaningful results.
+
+## `convection_analytical`
+
+Solves for T_b or Q in a free convection heat transfer problem.
+
+Parameters
+----------
+T_a : float or np.ndarray
+    Ambient temperature [K]
+A : float
+    Surface area [m^2]
+d : float
+    Characteristic length [m]
+L : float
+    Vertical length [m]
+T_eval : array-like
+    Temperature values corresponding to the property vectors
+beta, mu, rho, cp, k : array-like
+    Thermophysical property vectors
+nusselt_func : callable
+    Function to compute Nu, must accept Gr, Pr, Ra, d, L
+mode : str
+    'solve_T' to compute T_b (requires Q),
+    'solve_Q' to compute Q (requires T_b)
+Q : float or np.ndarray, optional
+    Heat transfer rate [W] (required for mode='solve_T')
+T_b : float or np.ndarray, optional
+    Surface temperature [K] (required for mode='solve_Q')
+g : float, optional
+    Gravitational acceleration [m/s^2] (default is 9.81)
+max_iter : int, optional
+    Maximum number of iterations (only used in mode='solve_T')
+tol : float, optional
+    Convergence tolerance (only used in mode='solve_T')
+
+Returns
+-------
+dict with results including:
+- T_b, T_avg, h, Nu, Q (if solved), Ra, Gr, Pr
+
 ### From `math_utils.py`
 
 
@@ -1831,7 +1973,7 @@ Returns:
         Possibly trimmed x corresponding to dy_dx.
     error_term : str
         The truncation error term in big-O notation, e.g., "O(h^2)".
-    error_estimation : np.ndarray
+    error_estimation : n
 
 ## `error_catastrophic_cancellation`
 
