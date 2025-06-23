@@ -431,7 +431,6 @@ def convection_analytical(
         T_b = T_a + Q / (h * A)
         for _ in range(max_iter):
             T_avg = 0.5 * (T_a + T_b)
-
             # warning 
             if not (T_eval[0] <= T_avg <= T_eval[-1]):
                 warnings.warn(f"T_avg={T_avg:.2f} is outside the interpolation range. Extend T_eval")
