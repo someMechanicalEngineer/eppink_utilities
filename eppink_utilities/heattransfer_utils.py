@@ -38,12 +38,8 @@ def conduction_radial_steady_numerical(r, L, bc, k, gridpoints, solver="RK45", t
 
     Returns
     -------
-    dict
-        Dictionary containing:
-        - 'r': radial positions array,
-        - 'T': temperature distribution array,
-        - 'dT/dr': temperature gradient array,
-        - 'Q_error': difference between heat flux at inner and outer boundaries (flux conservation error).
+    array like
+        r_vals, T_vals, dTdr_vals, Q_error
 
     Description
     -----------
@@ -149,10 +145,7 @@ def conduction_radial_steady_numerical(r, L, bc, k, gridpoints, solver="RK45", t
         warnings.warn(f"Flux inconsistency: Q(r0)={Q_r0_calc:.4f}, Q(R)={Q_R_calc:.4f}")
 
 
-    return {"r":        r_vals, 
-            "T":        T_vals, 
-            "dT/dr":    dTdr_vals,
-            "Q_error":  Q_error}
+    return r_vals, T_vals, dTdr_vals, Q_error
 
 def conduction_radial_analytical(
     radii,
@@ -166,8 +159,8 @@ def conduction_radial_analytical(
 
     Returns
     -------
-    sol_guess : dict
-        Dictionary with 'r', 'T', 'Q_dot', 'q_dot', and 'dT_dr'
+    sol_guess : array like
+        r_all, T_all, Q_dot, q_dot, dT_dr
     """
     n = len(k_data_list)
     T1, Tn1 = T_bounds
@@ -253,14 +246,8 @@ def conduction_radial_analytical(
 
     dT_dr, q_dot = compute_gradients_per_layer_forward_diff(r_all, T_all, k_all, radii, N_points_per_layer)
 
-    sol_guess = {
-        'r': r_all,
-        'T': T_all,
-        'Q_dot': Q_dot,
-        'q_dot': q_dot,
-        'dT_dr': dT_dr
-    }
-    return sol_guess
+
+    return r_all, T_all, Q_dot, q_dot, dT_dr
 
 def Nusselt_correlations_free(mode, *, Ra=None, Gr=None, Pr = None, d=None, L=None):
     """
