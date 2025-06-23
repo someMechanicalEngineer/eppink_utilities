@@ -142,3 +142,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-22
 ### Changed
 - new heattransfer_utils.convection_analytical, heattransfer_utils.Nusselt_correlations_free and dimless_utils.rayleigh
+
+## Version 0.12.1 
+2025-06-23
+### Changed
+- Changed the returns of conduction_radial_steady_numerical
