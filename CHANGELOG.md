@@ -157,3 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-23
 ### Changed
 - reverted grashof number bugfix. Problem was that negative values for physical properties were fed into the convection equation. These are nou caught.
+
+## Version 0.12.4 
+2025-06-23
+### Changed
+- Grashof number np.abs(dT) was required after all....
