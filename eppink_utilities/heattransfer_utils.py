@@ -388,8 +388,16 @@ def convection_analytical(
 
     Returns
     -------
-    dict with results including:
-    - T_b, T_avg, h, Nu, Q (if solved), Ra, Gr, Pr
+    results including:
+    - Q_solved,  
+        T_a,       
+        T_b,      
+        T_avg,   
+        h,        
+        Nu,      
+        Ra,       
+        Gr,      
+        Pr        
     """
     
     # Prepare interpolation functions
@@ -406,10 +414,15 @@ def convection_analytical(
 
         # Initial guess
         h = 10
-        T_b = T_a - Q / (h * A)
+        T_b = T_a + Q / (h * A)
 
         for _ in range(max_iter):
             T_avg = 0.5 * (T_a + T_b)
+
+            # warning 
+            if not (T_eval[0] <= T_avg <= T_eval[-1]):
+                warnings.warn(f"T_avg={T_avg:.2f} is outside the interpolation range. Extend T_eval")
+
 
             # Interpolate properties
             beta_i = interp_beta(T_avg)
@@ -428,7 +441,7 @@ def convection_analytical(
 
             Nu = nusselt_func(Gr=Gr, Pr=Pr, Ra=Ra, d=d, L=L)
             h_new = Nu * k_i / d
-            T_b_new = T_a - Q / (h_new * A)
+            T_b_new = T_a + Q / (h_new * A)
 
             if np.all(np.abs(T_b_new - T_b) < tol):
                 break
@@ -488,7 +501,7 @@ if __name__ == "__main__":
     from eppink_utilities.heattransfer_utils import Nusselt_correlations_free
 
     # Sample temperature range for property interpolation [K]
-    T_eval = np.linspace(300, 350, 5)
+    T_eval = np.linspace(100, 400, 5)
 
     # Sample property vectors corresponding to T_eval
     beta = 1 / T_eval
@@ -502,7 +515,7 @@ if __name__ == "__main__":
     d = 0.01    # m
     L = 0.1     # m
     T_a = 350   # K
-    Q = 20      # W
+    Q = -20      # W
     T_b = 328.53   # K
 
     # Bind the Nusselt function to a specific correlation
