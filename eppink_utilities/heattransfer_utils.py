@@ -399,7 +399,21 @@ def convection_analytical(
         Gr,      
         Pr        
     """
-    
+
+    def check_positive_properties(beta_i, mu_i, rho_i, cp_i, k_i, nu_i):
+        if beta_i <= 0:
+            raise ValueError(f"Invalid beta (thermal expansion coefficient): {beta_i}. Expected > 0.")
+        if mu_i <= 0:
+            raise ValueError(f"Invalid dynamic viscosity (mu): {mu_i}. Expected > 0.")
+        if rho_i <= 0:
+            raise ValueError(f"Invalid density (rho): {rho_i}. Expected > 0.")
+        if cp_i <= 0:
+            raise ValueError(f"Invalid specific heat capacity (cp): {cp_i}. Expected > 0.")
+        if k_i <= 0:
+            raise ValueError(f"Invalid thermal conductivity (k): {k_i}. Expected > 0.")
+        if nu_i <= 0:
+            raise ValueError(f"Invalid kinematic viscosity (nu): {nu_i}. Expected > 0.")
+        
     # Prepare interpolation functions
     interp = lambda arr: interp1d(T_eval, arr, kind='linear', fill_value='extrapolate')
     interp_beta = interp(beta)
@@ -415,7 +429,6 @@ def convection_analytical(
         # Initial guess
         h = 10
         T_b = T_a + Q / (h * A)
-
         for _ in range(max_iter):
             T_avg = 0.5 * (T_a + T_b)
 
@@ -423,22 +436,17 @@ def convection_analytical(
             if not (T_eval[0] <= T_avg <= T_eval[-1]):
                 warnings.warn(f"T_avg={T_avg:.2f} is outside the interpolation range. Extend T_eval")
 
-
             # Interpolate properties
             beta_i = interp_beta(T_avg)
             mu_i   = interp_mu(T_avg)
             rho_i  = interp_rho(T_avg)
             cp_i   = interp_cp(T_avg)
             k_i    = interp_k(T_avg)
-
-            nu = mu_i / rho_i
-            alpha = k_i / (rho_i * cp_i)
-            delta_T = np.abs(T_b - T_a)
-
-            Gr = grashof(g, d, nu, beta=beta_i, Ts=T_a, T_inf=T_b, mode="heat")
+            nu_i = mu_i/rho_i
+            check_positive_properties(beta_i, mu_i, rho_i, cp_i, k_i, nu_i)
+            Gr = grashof(g, d, nu=nu_i, beta=beta_i, Ts=T_a, T_inf=T_b, mode="heat")
             Pr = prandtl(cp_i, mu_i, k_i,)
             Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
-
             Nu = nusselt_func(Gr=Gr, Pr=Pr, Ra=Ra, d=d, L=L)
             h_new = Nu * k_i / d
             T_b_new = T_a + Q / (h_new * A)
@@ -466,12 +474,11 @@ def convection_analytical(
         rho_i  = interp_rho(T_avg)
         cp_i   = interp_cp(T_avg)
         k_i    = interp_k(T_avg)
+        nu_i = mu_i / rho_i
+        check_positive_properties(beta_i, mu_i, rho_i, cp_i, k_i, nu_i)
 
-        nu = mu_i / rho_i
-        alpha = k_i / (rho_i * cp_i)
-        delta_T = np.abs(T_b - T_a)
 
-        Gr = grashof(g, d, nu, beta=beta_i, Ts=T_a, T_inf=T_b, mode="heat")
+        Gr = grashof(g, d, nu_i, beta=beta_i, Ts=T_a, T_inf=T_b, mode="heat")
         Pr = prandtl(cp_i, mu_i, k_i,)
         Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
 
@@ -499,16 +506,19 @@ if __name__ == "__main__":
     import numpy as np
     from functools import partial
     from eppink_utilities.heattransfer_utils import Nusselt_correlations_free
+    import CoolProp.CoolProp as CP
 
     # Sample temperature range for property interpolation [K]
-    T_eval = np.linspace(100, 400, 5)
+    T_eval = np.linspace(100, 400, 50)
 
-    # Sample property vectors corresponding to T_eval
-    beta = 1 / T_eval
-    mu = np.linspace(1.8e-5, 2.1e-5, len(T_eval))
-    rho = np.linspace(1.2, 1.1, len(T_eval))
-    cp = np.linspace(1000, 1020, len(T_eval))
-    k = np.linspace(0.026, 0.030, len(T_eval))
+
+    fluid = "N2"
+    P = 101325                                                              # gap pressure [Pa]
+    k    = CP.PropsSI('L', 'T', T_eval, 'P', P, fluid)                  # Thermal conductivity [W/m·K]
+    cp    = CP.PropsSI('C', 'T', T_eval, 'P', P, fluid)                  # Specific heat [J/kg·K]
+    rho   = CP.PropsSI('D', 'T', T_eval, 'P', P, fluid)                  # Density [kg/m³]
+    mu    = CP.PropsSI('V', 'T', T_eval, 'P', P, fluid)                  # Dynamic viscosity [Pa·s]
+    beta = -CP.PropsSI('d(D)/d(T)|P', 'T' ,T_eval ,'P' ,P , fluid)/rho
 
     # Geometric and input conditions
     A = 0.2     # m²
