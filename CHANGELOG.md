@@ -147,3 +147,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-23
 ### Changed
 - Changed the returns of conduction_radial_steady_numerical
+
+## Version 0.12.2 
+2025-06-23
+### Changed
+- Bugfix Grashof number. Now takes np.abs(dT)
