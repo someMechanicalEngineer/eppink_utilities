@@ -1760,12 +1760,8 @@ tol : float, optional
 
 Returns
 -------
-dict
-    Dictionary containing:
-    - 'r': radial positions array,
-    - 'T': temperature distribution array,
-    - 'dT/dr': temperature gradient array,
-    - 'Q_error': difference between heat flux at inner and outer boundaries (flux conservation error).
+array like
+    r_vals, T_vals, dTdr_vals, Q_error
 
 Description
 -----------
@@ -1804,8 +1800,8 @@ Analytical solution for radial conduction in a multi-layered cylinder.
 
 Returns
 -------
-sol_guess : dict
-    Dictionary with 'r', 'T', 'Q_dot', 'q_dot', and 'dT_dr'
+sol_guess : array like
+    r_all, T_all, Q_dot, q_dot, dT_dr
 
 ## `Nusselt_correlations_free`
 
