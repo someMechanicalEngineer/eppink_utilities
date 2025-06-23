@@ -1898,8 +1898,16 @@ tol : float, optional
 
 Returns
 -------
-dict with results including:
-- T_b, T_avg, h, Nu, Q (if solved), Ra, Gr, Pr
+results including:
+- Q_solved,  
+    T_a,       
+    T_b,      
+    T_avg,   
+    h,        
+    Nu,      
+    Ra,       
+    Gr,      
+    Pr
 
 ### From `math_utils.py`
 
