@@ -182,3 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-24
 ### Changed
 - Forgot to include d when calling the check positive function
+## Version 0.13.0 
+2025-06-24
+### Changed
+- Added sleepmode_prevent and sleepmode_restore
