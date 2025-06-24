@@ -177,3 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-24
 ### Changed
 - Problem with convection function was that a negative d caused problems with grashof. Now throws an error with negative d.
+
+## Version 0.12.11 
+2025-06-24
+### Changed
+- Forgot to include d when calling the check positive function
