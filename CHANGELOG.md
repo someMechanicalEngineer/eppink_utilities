@@ -172,17 +172,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-24
 ### Changed
 - bugfix conection function
-## Version 0.12.7 
-2025-06-24
-### Changed
-- Describe your changes here
 
-## Version 0.12.8 
+## Version 0.12.10 
 2025-06-24
 ### Changed
-- Describe your changes here
-
-## Version 0.12.9 
-2025-06-24
-### Changed
-- Describe your changes here
+- Problem with convection function was that a negative d caused problems with grashof. Now throws an error with negative d.
