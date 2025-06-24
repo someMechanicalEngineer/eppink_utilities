@@ -2156,12 +2156,13 @@ def grashof(g, L, nu, *, mode="heat",
             raise ValueError("For 'heat' mode, beta, Ts, and T_inf must be provided.")
         beta, Ts, T_inf = validate_inputs(beta, Ts, T_inf)
         delta_T = np.abs(Ts - T_inf)
+        print(f"dT={delta_T}, g ={g}, beta ={beta}, L = {L}")
         numerator = g * beta * delta_T * L**3
     elif mode == 'mass':
         if beta_star is None or Ca_s is None or Ca_a is None:
             raise ValueError("For 'mass' mode, beta_star, Ca_s, and Ca_a must be provided.")
         beta_star, Ca_s, Ca_a = validate_inputs(beta_star, Ca_s, Ca_a)
-        delta_Ca = Ca_s - Ca_a
+        delta_Ca = np.abs(Ca_s - Ca_a)
         numerator = g * beta_star * delta_Ca * L**3
     else:
         raise ValueError("Mode must be either 'heat' or 'mass'.")
