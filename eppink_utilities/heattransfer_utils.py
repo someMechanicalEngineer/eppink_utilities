@@ -428,7 +428,7 @@ def convection_analytical(
 
         # Initial guess
         h = 10
-        T_b = T_a + Q / (h * A)
+        T_b = T_a - Q / (h * A)
         for _ in range(max_iter):
             T_avg = 0.5 * (T_a + T_b)
             # warning 
@@ -448,7 +448,7 @@ def convection_analytical(
             Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
             Nu = nusselt_func(Gr=Gr, Pr=Pr, Ra=Ra, d=d, L=L)
             h_new = Nu * k_i / d
-            T_b_new = T_a + Q / (h_new * A)
+            T_b_new = T_a - Q / (h_new * A)
 
             if np.all(np.abs(T_b_new - T_b) < tol):
                 break
