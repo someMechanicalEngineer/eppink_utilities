@@ -400,7 +400,7 @@ def convection_analytical(
         Pr        
     """
 
-    def check_positive_properties(beta_i, mu_i, rho_i, cp_i, k_i, nu_i):
+    def check_positive_properties(beta_i, mu_i, rho_i, cp_i, k_i, nu_i, d):
         if beta_i <= 0:
             raise ValueError(f"Invalid beta (thermal expansion coefficient): {beta_i}. Expected > 0.")
         if mu_i <= 0:
@@ -413,6 +413,8 @@ def convection_analytical(
             raise ValueError(f"Invalid thermal conductivity (k): {k_i}. Expected > 0.")
         if nu_i <= 0:
             raise ValueError(f"Invalid kinematic viscosity (nu): {nu_i}. Expected > 0.")
+        if d <= 0:
+            raise ValueError(f"Invalid characteristic length (d): {d}. Expected > 0.")
         
     # Prepare interpolation functions
     interp = lambda arr: interp1d(T_eval, arr, kind='linear', fill_value='extrapolate')
@@ -447,7 +449,6 @@ def convection_analytical(
             Pr = prandtl(cp_i, mu_i, k_i,)
             Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
             Nu = nusselt_func(Gr=Gr, Pr=Pr, Ra=Ra, d=d, L=L)
-            print(f"Gr={Gr}, Pr={Pr}, Ra={Ra}, Nu={Nu}")
             h_new = Nu * k_i / d
             T_b_new = T_a - Q / (h_new * A)
 
