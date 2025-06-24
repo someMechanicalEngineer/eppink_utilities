@@ -1685,6 +1685,27 @@ Raises:
 ### From `general_utils.py`
 
 
+## `sleepmode_prevent`
+
+Prevents Windows from entering sleep mode or turning off the display.
+
+This function uses the Windows API to set the execution state of the current thread,
+indicating that the system and display are required. It should be called at the 
+beginning of a long-running process to keep the system awake.
+
+WARNING:
+    You should ensure that `restore_sleep_mode()` is called when the task is finished 
+    to return the system to normal power-saving behavior. You can do this manually, 
+    or use `atexit.register(restore_sleep_mode)` to restore sleep mode automatically 
+    when the program exits.
+
+## `sleepmode_restore`
+
+Restores the system's normal sleep and display timeout behavior.
+
+This function clears the execution state flags set by `prevent_sleep_mode()`.
+Call this when your task is complete to allow the system to sleep again.
+
 ## `validate_inputs`
 
 Validates and converts inputs to NumPy arrays of the specified dtype,
