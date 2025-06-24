@@ -167,3 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-24
 ### Changed
 - bugfix convection function
+
+## Version 0.12.6 
+2025-06-24
+### Changed
+- bugfix conection function
