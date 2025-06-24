@@ -444,7 +444,7 @@ def convection_analytical(
             cp_i   = interp_cp(T_avg)
             k_i    = interp_k(T_avg)
             nu_i = mu_i/rho_i
-            check_positive_properties(beta_i, mu_i, rho_i, cp_i, k_i, nu_i)
+            check_positive_properties(beta_i, mu_i, rho_i, cp_i, k_i, nu_i, d)
             Gr = grashof(g, d, nu=nu_i, beta=beta_i, Ts=T_a, T_inf=T_b, mode="heat")
             Pr = prandtl(cp_i, mu_i, k_i,)
             Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
