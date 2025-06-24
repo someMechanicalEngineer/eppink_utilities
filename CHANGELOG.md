@@ -172,3 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-24
 ### Changed
 - bugfix conection function
+## Version 0.12.7 
+2025-06-24
+### Changed
+- Describe your changes here
