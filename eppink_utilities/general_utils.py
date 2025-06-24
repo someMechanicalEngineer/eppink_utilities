@@ -1,6 +1,39 @@
 import numpy as np
 import ast
 import os
+import ctypes
+
+def sleepmode_prevent():
+    """
+    Prevents Windows from entering sleep mode or turning off the display.
+
+    This function uses the Windows API to set the execution state of the current thread,
+    indicating that the system and display are required. It should be called at the 
+    beginning of a long-running process to keep the system awake.
+
+    WARNING:
+        You should ensure that `restore_sleep_mode()` is called when the task is finished 
+        to return the system to normal power-saving behavior. You can do this manually, 
+        or use `atexit.register(restore_sleep_mode)` to restore sleep mode automatically 
+        when the program exits.
+    """
+    ES_CONTINUOUS       = 0x80000000
+    ES_SYSTEM_REQUIRED  = 0x00000001
+    ES_DISPLAY_REQUIRED = 0x00000002
+
+    ctypes.windll.kernel32.SetThreadExecutionState(
+        ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
+    )
+
+def sleepmode_restore():
+    """
+    Restores the system's normal sleep and display timeout behavior.
+
+    This function clears the execution state flags set by `prevent_sleep_mode()`.
+    Call this when your task is complete to allow the system to sleep again.
+    """
+    ES_CONTINUOUS = 0x80000000
+    ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
 def validate_inputs(*args, dtype=float, allow_scalar=True, allow_array=True, check_broadcast=True, scalars_to_arrays=False):
     """
