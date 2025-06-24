@@ -447,7 +447,7 @@ def convection_analytical(
             Pr = prandtl(cp_i, mu_i, k_i,)
             Ra = rayleigh(Gr=Gr,Pr=Pr,mode="grpr")
             Nu = nusselt_func(Gr=Gr, Pr=Pr, Ra=Ra, d=d, L=L)
-            check_positive_properties(Gr, Pr, Ra, Nu)
+            check_positive_properties(Gr, Pr, Ra, Nu, 1, 1)
             h_new = Nu * k_i / d
             T_b_new = T_a - Q / (h_new * A)
 
