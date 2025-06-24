@@ -162,3 +162,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-23
 ### Changed
 - Grashof number np.abs(dT) was required after all....
+
+## Version 0.12.5 
+2025-06-24
+### Changed
+- bugfix convection function
