@@ -1815,6 +1815,38 @@ Warnings are issued if the ODE solver fails or if boundary fluxes are inconsiste
 This method is suitable for modeling steady heat conduction in cylindrical coordinates
 with radial dependence and non-constant thermal conductivity.
 
+## `conduction_cartesian_steady_numerical`
+
+Solve steady-state 1D Cartesian heat conduction with temperature-dependent thermal conductivity.
+
+Parameters
+----------
+x : tuple of floats
+    Domain in x-direction as (x0, x1).
+A : float
+    Cross-sectional area (constant in Cartesian geometry).
+bc : tuple
+    Boundary conditions at x0 as (T0, T1_input, Q):
+    - T0: Temperature at x0.
+    - dTdx: Temperature gradient dT/dx at x0 (can be None if unknown).
+    - Q: Heat flux at x0 (can be None if unknown).
+    Exactly one of dTdx or Q must be provided, or both must be consistent.
+k : float or array-like
+    Thermal conductivity. Can be:
+    - A constant float or int.
+    - An array-like [[T0, k0], [T1, k1], ...] for T-dependent k, interpolated internally.
+gridpoints : int
+    Number of points in x-direction for solution.
+solver : str, optional
+    ODE solver method for scipy.integrate.solve_ivp.
+tol : float, optional
+    Tolerance for flux mismatch warning.
+
+Returns
+-------
+array-like
+    x_vals, T_vals, dTdx_vals, Q_error
+
 ## `conduction_radial_analytical`
 
 Analytical solution for radial conduction in a multi-layered cylinder.
