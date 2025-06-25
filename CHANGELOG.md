@@ -186,3 +186,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-24
 ### Changed
 - Added sleepmode_prevent and sleepmode_restore
+
+## Version 0.14.0 
+2025-06-25
+### Changed
+- Start of lookuptables. Furthermore addition of cartesian numerical conduction function
