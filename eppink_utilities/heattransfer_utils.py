@@ -147,6 +147,102 @@ def conduction_radial_steady_numerical(r, L, bc, k, gridpoints, solver="RK45", t
 
     return r_vals, T_vals, dTdr_vals, Q_error
 
+def conduction_cartesian_steady_numerical(x, A, bc, k, gridpoints, solver="RK45", tol=1e-3):
+    """
+    Solve steady-state 1D Cartesian heat conduction with temperature-dependent thermal conductivity.
+
+    Parameters
+    ----------
+    x : tuple of floats
+        Domain in x-direction as (x0, x1).
+    A : float
+        Cross-sectional area (constant in Cartesian geometry).
+    bc : tuple
+        Boundary conditions at x0 as (T0, T1_input, Q):
+        - T0: Temperature at x0.
+        - dTdx: Temperature gradient dT/dx at x0 (can be None if unknown).
+        - Q: Heat flux at x0 (can be None if unknown).
+        Exactly one of dTdx or Q must be provided, or both must be consistent.
+    k : float or array-like
+        Thermal conductivity. Can be:
+        - A constant float or int.
+        - An array-like [[T0, k0], [T1, k1], ...] for T-dependent k, interpolated internally.
+    gridpoints : int
+        Number of points in x-direction for solution.
+    solver : str, optional
+        ODE solver method for scipy.integrate.solve_ivp.
+    tol : float, optional
+        Tolerance for flux mismatch warning.
+
+    Returns
+    -------
+    array-like
+        x_vals, T_vals, dTdx_vals, Q_error
+    """
+
+    x0, x1 = x
+    T0, dTdx, Q = bc
+
+    if isinstance(k, (float, int)):
+        k_const = float(k)
+        def k_interp(T): return k_const
+        def dk_interp(T): return 0.0
+    else:
+        k = np.asarray(k)
+        k_interp = interp1d(k[:, 0], k[:, 1], kind='cubic', fill_value="extrapolate")
+        T_fine = np.linspace(k[:, 0].min(), k[:, 0].max(), 1000)
+        dk_dT_fine = np.gradient(k_interp(T_fine), T_fine)
+        dk_interp = interp1d(T_fine, dk_dT_fine, kind='linear', fill_value="extrapolate")
+
+    if dTdx is None and Q is not None:
+        k0 = k_interp(T0)
+        T1 = - Q / (k0 * A)
+    elif Q is None and dTdx is not None:
+        T1 = dTdx
+    elif Q is not None and dTdx is not None:
+        k0 = k_interp(T0)
+        expected_T1 = - Q / (k0 * A)
+        if not np.isclose(dTdx, expected_T1, rtol=1e-4):
+            raise ValueError("Inconsistent values: T'0 and Q do not satisfy dT/dx = -Q / (k(T) * A)")
+        T1 = dTdx
+    else:
+        raise ValueError("Must provide either dT/dx or Q in bc")
+
+    def system(x, y):
+        T, dTdx = y
+        k_val = k_interp(T)
+        dk_dT_val = dk_interp(T)
+        d2Tdx2 = - (dk_dT_val / k_val) * dTdx**2
+        return [dTdx, d2Tdx2]
+
+    x_span = (x0, x1)
+    x_eval = np.linspace(x0, x1, gridpoints)
+    y0 = [T0, T1]
+
+    sol = solve_ivp(system, x_span, y0, method=solver, t_eval=x_eval)
+
+    if not sol.success:
+        warnings.warn("ODE solver failed: " + sol.message)
+
+    T_vals = sol.y[0]
+    dTdx_vals = sol.y[1]
+    x_vals = sol.t
+
+    # Compute heat flux at both ends
+    k_x0 = k_interp(T_vals[0])
+    Q_x0_calc = - k_x0 * A * dTdx_vals[0]
+
+    k_x1 = k_interp(T_vals[-1])
+    Q_x1_calc = - k_x1 * A * dTdx_vals[-1]
+
+    Q_error = Q_x0_calc - Q_x1_calc
+
+    if np.abs(Q_error) > tol * np.abs(Q_x0_calc):
+        warnings.warn(f"Flux inconsistency: Q(x0)={Q_x0_calc:.4f}, Q(x1)={Q_x1_calc:.4f}")
+
+    return x_vals, T_vals, dTdx_vals, Q_error
+
+
 def conduction_radial_analytical(
     radii,
     T_bounds,
@@ -502,86 +598,73 @@ def convection_analytical(
         Pr         # Pr
     )
 
-
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     import numpy as np
-    from functools import partial
-    from eppink_utilities.heattransfer_utils import Nusselt_correlations_free
-    import CoolProp.CoolProp as CP
 
-    # Sample temperature range for property interpolation [K]
-    T_eval = np.linspace(100, 400, 50)
+    # Define temperature-dependent thermal conductivity: k(T) = 10 + 0.5 * T
+    # As an array for interpolation: [[T0, k0], [T1, k1], ...]
+    T_k_array = np.array([
+        [0, 60],
+        [100, 60],
+        [200, 60],
+        [300, 60],
+        [400, 60]
+    ])
 
+    # Domain and area
+    x = (0, 0.1)  # meters
+    A = 0.01             # m² cross-sectional area
+    gridpoints = 200
 
-    fluid = "N2"
-    P = 101325                                                              # gap pressure [Pa]
-    k    = CP.PropsSI('L', 'T', T_eval, 'P', P, fluid)                  # Thermal conductivity [W/m·K]
-    cp    = CP.PropsSI('C', 'T', T_eval, 'P', P, fluid)                  # Specific heat [J/kg·K]
-    rho   = CP.PropsSI('D', 'T', T_eval, 'P', P, fluid)                  # Density [kg/m³]
-    mu    = CP.PropsSI('V', 'T', T_eval, 'P', P, fluid)                  # Dynamic viscosity [Pa·s]
-    beta = -CP.PropsSI('d(D)/d(T)|P', 'T' ,T_eval ,'P' ,P , fluid)/rho
+    # --- Test Case 1: Provide T0 and dT/dx ---
+    T0 = 100  # deg C
+    T1_input = -500  # dT/dx in deg C/m (cooling direction)
+    Q = None  # unknown
 
-    # Geometric and input conditions
-    A = 0.2     # m²
-    d = 0.01    # m
-    L = 0.1     # m
-    T_a = 350   # K
-    Q = -20      # W
-    T_b = 328.53   # K
+    bc1 = (T0, T1_input, Q)
 
-    # Bind the Nusselt function to a specific correlation
-    nusselt_func = partial(Nusselt_correlations_free, mode="Annulus_vertical_2")
-
-    print("=== Mode: solve_T ===")
-    out_T = convection_analytical(
-        T_a=T_a,
-        Q=Q,
+    x_vals1, T_vals1, dTdx_vals1, Q_error1 = conduction_cartesian_steady_numerical(
+        x=x,
         A=A,
-        d=d,
-        L=L,
-        T_eval=T_eval,
-        beta=beta,
-        mu=mu,
-        rho=rho,
-        cp=cp,
-        k=k,
-        nusselt_func=nusselt_func,
-        mode="solve_T"
+        bc=bc1,
+        k=5,
+        gridpoints=gridpoints
     )
 
-    print(f"Q      = {out_T[0]:.2f} W")
-    print(f"T_a    = {out_T[1]:.2f} K")
-    print(f"T_b    = {out_T[2]:.2f} K")
-    print(f"T_avg  = {out_T[3]:.2f} K")
-    print(f"h      = {out_T[4]:.4f} W/m²K")
-    print(f"Nu     = {out_T[5]:.4f}")
-    print(f"Ra     = {out_T[6]:.2e}")
-    print(f"Gr     = {out_T[7]:.2e}")
-    print(f"Pr     = {out_T[8]:.4f}")
+    print("\n--- Test Case 1: T0 and dT/dx specified ---")
+    print(f"Max Temperature: {np.max(T_vals1):.2f} °C")
+    print(f"Min Temperature: {np.min(T_vals1):.2f} °C")
+    print(f"Heat flux discrepancy: {Q_error1:.6f} W")
 
-    print("\n=== Mode: solve_Q ===")
-    out_Q = convection_analytical(
-        T_a=T_a,
-        T_b=T_b,
+    # --- Test Case 2: Provide T0 and Q ---
+    T0 = 100  # deg C
+    Q = -T1_input * A * 60  # W (heat added at x=0)
+    T1_input = None
+
+    bc2 = (T0, T1_input, Q)
+
+    x_vals2, T_vals2, dTdx_vals2, Q_error2 = conduction_cartesian_steady_numerical(
+        x=x,
         A=A,
-        d=d,
-        L=L,
-        T_eval=T_eval,
-        beta=beta,
-        mu=mu,
-        rho=rho,
-        cp=cp,
-        k=k,
-        nusselt_func=nusselt_func,
-        mode="solve_Q"
+        bc=bc2,
+        k=T_k_array,
+        gridpoints=gridpoints
     )
 
-    print(f"Q      = {out_Q[0]:.2f} W")
-    print(f"T_a    = {out_Q[1]:.2f} K")
-    print(f"T_b    = {out_Q[2]:.2f} K")
-    print(f"T_avg  = {out_Q[3]:.2f} K")
-    print(f"h      = {out_Q[4]:.4f} W/m²K")
-    print(f"Nu     = {out_Q[5]:.4f}")
-    print(f"Ra     = {out_Q[6]:.2e}")
-    print(f"Gr     = {out_Q[7]:.2e}")
-    print(f"Pr     = {out_Q[8]:.4f}")
+    print("\n--- Test Case 2: T0 and Q specified ---")
+    print(f"Max Temperature: {np.max(T_vals2):.2f} °C")
+    print(f"Min Temperature: {np.min(T_vals2):.2f} °C")
+    print(f"Heat flux discrepancy: {Q_error2:.6f} W")
+
+    # --- Plotting ---
+    plt.figure(figsize=(10, 6))
+    plt.plot(x_vals1, T_vals1, label="Case 1: T0 & dT/dx")
+    plt.plot(x_vals2, T_vals2, label="Case 2: T0 & Q", linestyle='--')
+    plt.xlabel("x [m]")
+    plt.ylabel("Temperature [°C]")
+    plt.title("Steady-State 1D Heat Conduction with k(T)")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
