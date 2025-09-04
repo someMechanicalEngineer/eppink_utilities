@@ -2565,7 +2565,7 @@ def rayleigh(
         Gr, Pr = validate_inputs(Gr, Pr)
         return Gr * Pr
 
-def weber(rho, v, l, sigma):
+def weber(rho, u, L, sigma):
     """
     Calculate Weber number.
 
@@ -2577,7 +2577,7 @@ def weber(rho, v, l, sigma):
         Density of the fluid (kg/m³).
     v : float or array-like
         Velocity of the fluid (m/s).
-    l : float or array-like
+    L : float or array-like
         Characteristic length, typically droplet diameter (m).
     sigma : float or array-like
         Surface tension of the fluid (N/m).
@@ -2592,9 +2592,9 @@ def weber(rho, v, l, sigma):
     The Weber number is a dimensionless number representing the ratio of 
     inertial forces to surface tension forces.
     """
-    rho, v, l, sigma = validate_inputs(rho, v, l, sigma)
+    rho, u, L, sigma = validate_inputs(rho, u, L, sigma)
 
-    numerator = rho * v**2 * l
+    numerator = rho * u**2 * L
     We = safe_divide(numerator, sigma)
 
     return We
