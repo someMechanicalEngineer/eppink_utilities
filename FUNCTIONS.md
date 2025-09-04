@@ -1500,6 +1500,33 @@ Returns:
 Raises:
     ValueError: if mode is invalid or required parameters are missing.
 
+## `weber`
+
+Calculate Weber number.
+
+We = (rho * v^2 * l) / sigma
+
+Parameters:
+-----------
+rho : float or array-like
+    Density of the fluid (kg/m³).
+v : float or array-like
+    Velocity of the fluid (m/s).
+l : float or array-like
+    Characteristic length, typically droplet diameter (m).
+sigma : float or array-like
+    Surface tension of the fluid (N/m).
+
+Returns:
+--------
+We : float or np.ndarray
+    Weber number, with NaN propagated if inputs contain NaN.
+
+Notes:
+------
+The Weber number is a dimensionless number representing the ratio of 
+inertial forces to surface tension forces.
+
 ### From `file_utils.py`
 
 
