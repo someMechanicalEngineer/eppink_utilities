@@ -201,3 +201,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-09-04
 ### Changed
 - Fixed sign convention
+## Version 0.15.2 
+2025-09-04
+### Changed
+- Patched fanning friction factor: Implicit Colebrook equation now produces f = nan for Re = 0 
