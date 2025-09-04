@@ -191,3 +191,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-06-25
 ### Changed
 - Start of lookuptables. Furthermore addition of cartesian numerical conduction function
+
+## Version 0.15.0 
+2025-09-04
+### Changed
+- Addition of Weber Number
