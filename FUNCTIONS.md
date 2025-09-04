@@ -1512,7 +1512,7 @@ rho : float or array-like
     Density of the fluid (kg/m³).
 v : float or array-like
     Velocity of the fluid (m/s).
-l : float or array-like
+L : float or array-like
     Characteristic length, typically droplet diameter (m).
 sigma : float or array-like
     Surface tension of the fluid (N/m).
