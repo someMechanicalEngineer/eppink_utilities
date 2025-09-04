@@ -196,3 +196,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 2025-09-04
 ### Changed
 - Addition of Weber Number
+
+## Version 0.15.1 
+2025-09-04
+### Changed
+- Fixed sign convention
