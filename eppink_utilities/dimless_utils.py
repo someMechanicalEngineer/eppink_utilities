@@ -1765,7 +1765,8 @@ def fanning_friction_factor(*, mode="mode 1", Re = None, epsilon=None, D=None, f
     elif mode == "mode 8":
         # Implicit Colebrook equation - iterative solution
         if np.any(Re == 0):
-            raise ValueError("Reynolds number must be nonzero for Colebrook equation.")
+            f = np.nan
+            print("Reynolds number must be nonzero for Colebrook equation.")
         f = np.full_like(Re, f_init, dtype=np.float64)
 
         for i in range(max_iter):
